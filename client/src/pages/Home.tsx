@@ -4,7 +4,6 @@ import Hero from "@/components/Hero";
 import CategoryFilters from "@/components/CategoryFilters";
 import ProductCard from "@/components/ProductCard";
 
-// Sample product data
 const PRODUCTS = [
   {
     id: "1",
@@ -66,10 +65,8 @@ export default function Home() {
   const filteredProducts =
     selectedCategory === "all"
       ? PRODUCTS
-      : PRODUCTS.filter(
-          (p) =>
-            p.category.toLowerCase().includes(selectedCategory) ||
-            selectedCategory === "all"
+      : PRODUCTS.filter((product) =>
+          product.category.toLowerCase().includes(selectedCategory)
         );
 
   return (
@@ -77,11 +74,9 @@ export default function Home() {
       <Header />
       <Hero />
 
-      {/* Products Section */}
       <section className="py-16 md:py-24 bg-gradient-to-b from-background to-accent/3">
         <div className="container">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Sidebar Filters */}
             <aside className="lg:col-span-1">
               <div className="sticky top-24 bg-white rounded-xl p-6 border border-border">
                 <CategoryFilters
@@ -91,17 +86,15 @@ export default function Home() {
               </div>
             </aside>
 
-            {/* Products Grid */}
             <main className="lg:col-span-3">
-              {/* Header */}
-              <div className="mb-8">
+              <div className="mb-8 animate-fade-up">
                 <h2
                   className="text-3xl md:text-4xl font-bold text-foreground mb-2"
                   style={{ fontFamily: "Playfair Display" }}
                 >
                   {selectedCategory === "all"
                     ? "Todos os Produtos"
-                    : `${selectedCategory}`}
+                    : selectedCategory}
                 </h2>
                 <p className="text-muted-foreground">
                   {filteredProducts.length} produto
@@ -110,19 +103,18 @@ export default function Home() {
                 </p>
               </div>
 
-              {/* Products Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredProducts.map((product) => (
+                {filteredProducts.map((product, index) => (
                   <div
                     key={product.id}
-                    className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+                    className="animate-fade-up"
+                    style={{ animationDelay: `${index * 80}ms` }}
                   >
                     <ProductCard {...product} />
                   </div>
                 ))}
               </div>
 
-              {/* Empty State */}
               {filteredProducts.length === 0 && (
                 <div className="text-center py-16">
                   <p className="text-lg text-muted-foreground mb-4">
@@ -141,7 +133,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Newsletter Section */}
       <section className="py-16 md:py-24 bg-primary text-primary-foreground">
         <div className="container max-w-2xl">
           <div className="text-center space-y-6">
@@ -172,7 +163,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="bg-foreground text-white py-12">
         <div className="container">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">

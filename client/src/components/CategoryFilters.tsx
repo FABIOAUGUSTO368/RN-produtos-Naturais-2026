@@ -31,7 +31,6 @@ export default function CategoryFilters({
 
   return (
     <div className="space-y-6">
-      {/* Category Buttons */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
           Categorias
@@ -55,7 +54,6 @@ export default function CategoryFilters({
         </div>
       </div>
 
-      {/* Sort Options */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
           Ordenar por
@@ -87,7 +85,6 @@ export default function CategoryFilters({
         </div>
       </div>
 
-      {/* Price Range Filter */}
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
           Faixa de Preço
@@ -114,7 +111,6 @@ export default function CategoryFilters({
         </div>
       </div>
 
-      {/* Active Filters Display */}
       <div className="space-y-3 pt-4 border-t border-border">
         <h3 className="text-sm font-semibold text-foreground">Filtros Ativos</h3>
         <div className="flex flex-wrap gap-2">

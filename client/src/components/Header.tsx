@@ -8,37 +8,48 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border transition-all duration-300">
       <div className="container flex items-center justify-between h-16">
-        {/* Logo */}
         <div className="flex items-center gap-2">
           <img
             src="/manus-storage/logo_leaf_de762ff6.png"
             alt="RN Naturais"
             className="w-8 h-8"
           />
-          <span className="text-xl font-bold text-primary" style={{ fontFamily: "Playfair Display" }}>
+          <span
+            className="text-xl font-bold text-primary"
+            style={{ fontFamily: "Playfair Display" }}
+          >
             RN Naturais
           </span>
         </div>
 
-        {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          <a href="#" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+          <a
+            href="#"
+            className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+          >
             Castanhas
           </a>
-          <a href="#" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+          <a
+            href="#"
+            className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+          >
             Chás
           </a>
-          <a href="#" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+          <a
+            href="#"
+            className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+          >
             Farinhas
           </a>
-          <a href="#" className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+          <a
+            href="#"
+            className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+          >
             Sobre
           </a>
         </nav>
 
-        {/* Right Actions */}
         <div className="flex items-center gap-4">
-          {/* Search (Desktop) */}
           <div className="hidden lg:flex items-center gap-2 bg-muted rounded-full px-3 py-2">
             <Search className="w-4 h-4 text-muted-foreground" />
             <input
@@ -48,7 +59,6 @@ export default function Header() {
             />
           </div>
 
-          {/* Cart */}
           <Button
             variant="ghost"
             size="icon"
@@ -60,23 +70,17 @@ export default function Header() {
             </span>
           </Button>
 
-          {/* Mobile Menu Toggle */}
           <Button
             variant="ghost"
             size="icon"
             className="md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            {isMenuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
+            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {isMenuOpen && (
         <div className="md:hidden border-t border-border bg-white">
           <nav className="container py-4 flex flex-col gap-4">

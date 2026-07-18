@@ -7,7 +7,6 @@ export default function Hero() {
     <section className="relative overflow-hidden bg-gradient-to-br from-background via-background to-accent/5">
       <div className="container py-16 md:py-24">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          {/* Left Content */}
           <div className="flex flex-col gap-6 order-2 md:order-1">
             <div className="flex gap-2 flex-wrap">
               <Badge
@@ -32,7 +31,8 @@ export default function Hero() {
                 Sabor Natural e Qualidade Premium para a sua mesa
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                Castanhas torradas na hora, farinhas funcionais, temperos selecionados e chás desidratados. Tudo vendido por peso, com a qualidade que você merece.
+                Castanhas torradas na hora, farinhas funcionais, temperos selecionados e chás
+                desidratados. Tudo vendido por peso, com a qualidade que você merece.
               </p>
             </div>
 
@@ -53,7 +53,6 @@ export default function Hero() {
               </Button>
             </div>
 
-            {/* Trust Indicators */}
             <div className="flex flex-col sm:flex-row gap-6 pt-8 border-t border-border">
               <div>
                 <p className="text-sm font-semibold text-primary">100% Natural</p>
@@ -61,7 +60,7 @@ export default function Hero() {
               </div>
               <div>
                 <p className="text-sm font-semibold text-primary">Entrega Rápida</p>
-                <p className="text-xs text-muted-foreground">Saiba Local em 24-48h</p>
+                <p className="text-xs text-muted-foreground">Envio local em 24-48h</p>
               </div>
               <div>
                 <p className="text-sm font-semibold text-primary">Garantia</p>
@@ -70,7 +69,6 @@ export default function Hero() {
             </div>
           </div>
 
-          {/* Right Image */}
           <div className="order-1 md:order-2 relative">
             <div className="relative rounded-2xl overflow-hidden shadow-2xl">
               <img
@@ -78,11 +76,9 @@ export default function Hero() {
                 alt="Produtos Naturais Premium"
                 className="w-full h-auto object-cover"
               />
-              {/* Overlay gradient for text contrast */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>
 
-            {/* Floating Card */}
             <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg p-4 max-w-xs border border-border">
               <p className="text-sm font-semibold text-foreground mb-2">
                 Vendido por Quilo
@@ -95,7 +91,6 @@ export default function Hero() {
         </div>
       </div>
 
-      {/* Decorative Elements */}
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10" />
       <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl -z-10" />
     </section>

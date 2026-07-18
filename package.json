@@ -1,6 +1,7 @@
 {
   "name": "rn_naturais_premium",
   "version": "1.0.0",
+  "description": "RN Naturais Premium - e-commerce de produtos naturais com Vite, React e Express.",
   "type": "module",
   "license": "MIT",
   "scripts": {
