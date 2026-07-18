@@ -1,98 +1,115 @@
+import { ArrowRight, BadgeCheck, MessageCircleMore, ShieldCheck, Truck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowRight } from "lucide-react";
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-background via-background to-accent/5">
-      <div className="container py-16 md:py-24">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <div className="flex flex-col gap-6 order-2 md:order-1">
-            <div className="flex gap-2 flex-wrap">
+    <section className="relative overflow-hidden border-b border-border bg-[linear-gradient(180deg,#fbf8f2_0%,#ffffff_100%)]">
+      <div className="container py-12 md:py-16">
+        <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-2">
+          <div className="order-2 flex flex-col gap-6 md:order-1">
+            <div className="flex flex-wrap gap-2">
               <Badge
                 variant="outline"
-                className="border-primary/30 text-primary bg-primary/5"
+                className="rounded-full border-primary/35 bg-primary/5 px-3 py-1 text-primary"
               >
-                ✓ Granel Certificado
+                Casa do Norte
               </Badge>
               <Badge
                 variant="outline"
-                className="border-accent text-accent bg-accent/5"
+                className="rounded-full border-[#d98b41]/40 bg-[#d98b41]/5 px-3 py-1 text-[#d98b41]"
               >
-                ⚡ Entrega Rápida
+                Chat ao vivo
+              </Badge>
+              <Badge
+                variant="outline"
+                className="rounded-full border-emerald-500/30 bg-emerald-500/5 px-3 py-1 text-emerald-700"
+              >
+                PIX e cartão
               </Badge>
             </div>
 
             <div className="space-y-4">
               <h1
-                className="text-4xl md:text-5xl font-bold text-foreground leading-tight"
+                className="max-w-xl text-4xl font-bold leading-tight text-foreground md:text-[2.75rem]"
                 style={{ fontFamily: "Playfair Display" }}
               >
-                Sabor Natural e Qualidade Premium para a sua mesa
+                Sabor de Casa do Norte com atendimento, pagamento e entrega em um só lugar
               </h1>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                Castanhas torradas na hora, farinhas funcionais, temperos selecionados e chás
-                desidratados. Tudo vendido por peso, com a qualidade que você merece.
+              <p className="max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
+                Um catálogo fictício com produtos regionais, imagens alinhadas a cada descrição e
+                uma experiência de compra que já mostra chat de atendimento, confirmação de
+                pagamento, avaliação e popups das etapas do pedido.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <Button
                 size="lg"
-                className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full gap-2 group btn-press"
+                className="group rounded-full bg-primary px-6 font-semibold text-primary-foreground btn-press hover:bg-primary/90"
+                onClick={() => document.getElementById("cardapio")?.scrollIntoView({ behavior: "smooth" })}
               >
-                Explorar Produtos
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                Ver cardápio
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
               </Button>
               <Button
                 size="lg"
                 variant="outline"
-                className="border-primary text-primary hover:bg-primary/5 font-semibold rounded-full btn-press"
+                className="rounded-full border-primary px-6 font-semibold text-primary btn-press hover:bg-primary/5"
+                onClick={() => document.getElementById("atendimento")?.scrollIntoView({ behavior: "smooth" })}
               >
-                Saiba Mais
+                Falar com o bot
+                <MessageCircleMore className="ml-2 h-4 w-4" />
               </Button>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-6 pt-8 border-t border-border">
-              <div>
-                <p className="text-sm font-semibold text-primary">100% Natural</p>
-                <p className="text-xs text-muted-foreground">Sem aditivos ou conservantes</p>
+            <div className="grid grid-cols-1 gap-4 border-t border-border pt-6 sm:grid-cols-3">
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-primary">Pedido assistido</p>
+                <p className="text-xs text-muted-foreground">Chat integrado para dúvidas sobre produtos</p>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-primary">Entrega Rápida</p>
-                <p className="text-xs text-muted-foreground">Envio local em 24-48h</p>
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-primary">Pagamento seguro</p>
+                <p className="text-xs text-muted-foreground">PIX, cartão e boleto no fluxo da loja</p>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-primary">Garantia</p>
-                <p className="text-xs text-muted-foreground">Satisfação ou devolução</p>
+              <div className="space-y-1">
+                <p className="text-sm font-semibold text-primary">Pós-venda</p>
+                <p className="text-xs text-muted-foreground">Avaliação e pesquisa de satisfação</p>
               </div>
             </div>
           </div>
 
-          <div className="order-1 md:order-2 relative">
-            <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+          <div className="order-1 relative md:order-2">
+            <div className="overflow-hidden rounded-2xl border border-white/70 shadow-[0_18px_50px_rgba(0,0,0,0.12)]">
               <img
-                src="/manus-storage/hero_naturais_ce7372c3.png"
-                alt="Produtos Naturais Premium"
-                className="w-full h-auto object-cover"
+                src="/menu-images/carne-de-sol.jpg"
+                alt="Carne de sol servida em foto de catálogo para Casa do Norte"
+                className="h-[260px] w-full object-cover md:h-[320px]"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
             </div>
 
-            <div className="absolute -bottom-4 -left-4 bg-white rounded-xl shadow-lg p-4 max-w-xs border border-border">
-              <p className="text-sm font-semibold text-foreground mb-2">
-                Vendido por Quilo
+            <div className="absolute -bottom-5 left-4 max-w-xs rounded-xl border border-border bg-white p-4 shadow-lg">
+              <div className="mb-2 flex items-center gap-2">
+                <BadgeCheck className="h-4 w-4 text-primary" />
+                <p className="text-sm font-semibold text-foreground">Imagens ligadas ao item</p>
+              </div>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Cada card da vitrine usa uma imagem que conversa com a descrição do produto, para
+                deixar o menu mais confiável e convincente.
               </p>
-              <p className="text-xs text-muted-foreground">
-                Escolha o peso que melhor se adequa a você. Sem desperdício, sem compromissos.
-              </p>
+            </div>
+
+            <div className="absolute -top-4 right-4 hidden rounded-full bg-white px-3 py-2 text-xs font-semibold text-primary shadow-md md:flex md:items-center md:gap-2">
+              <ShieldCheck className="h-4 w-4" />
+              Compra fictícia com experiência completa
+            </div>
+            <div className="absolute bottom-6 right-4 hidden rounded-full bg-white px-3 py-2 text-xs font-semibold text-[#d98b41] shadow-md md:flex md:items-center md:gap-2">
+              <Truck className="h-4 w-4" />
+              Etapas de entrega simuladas
             </div>
           </div>
         </div>
       </div>
-
-      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl -z-10" />
     </section>
   );
 }

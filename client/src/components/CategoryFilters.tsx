@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
-  { id: "all", label: "Todos os Produtos", icon: "🛍️" },
-  { id: "nuts", label: "Castanhas e Frutas Secas", icon: "🥜" },
-  { id: "tea", label: "Chás e Ervas", icon: "🍵" },
-  { id: "flour", label: "Farinhas e Grãos", icon: "🌾" },
-  { id: "spices", label: "Temperos", icon: "🌶️" },
-  { id: "supplements", label: "Suplementos", icon: "💊" },
+  { id: "all", label: "Todos os produtos", icon: "🛍️" },
+  { id: "carnes secas", label: "Carnes secas", icon: "🥩" },
+  { id: "cuscuz e massas", label: "Cuscuz e massas", icon: "🌾" },
+  { id: "farinhas", label: "Farinhas", icon: "🌽" },
+  { id: "laticínios", label: "Laticínios", icon: "🧀" },
+  { id: "pratos regionais", label: "Pratos regionais", icon: "🍛" },
 ];
 
 interface CategoryFiltersProps {
@@ -32,99 +32,91 @@ export default function CategoryFilters({
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+        <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-foreground">
           Categorias
         </h3>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-col gap-2">
           {CATEGORIES.map((category) => (
             <button
               key={category.id}
               onClick={() => handleCategoryChange(category.id)}
               className={cn(
-                "px-4 py-2 rounded-full text-sm font-semibold transition-all border",
+                "flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-all",
                 selected === category.id
-                  ? "bg-primary text-primary-foreground border-primary shadow-md"
-                  : "bg-white text-foreground border-border hover:border-primary/50 hover:bg-primary/5"
+                  ? "border-primary bg-primary text-primary-foreground shadow-sm"
+                  : "border-border bg-white text-foreground hover:border-primary/40 hover:bg-primary/5"
               )}
             >
-              <span className="mr-2">{category.icon}</span>
-              {category.label}
+              <span>{category.icon}</span>
+              <span>{category.label}</span>
             </button>
           ))}
         </div>
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+        <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-foreground">
           Ordenar por
         </h3>
         <div className="space-y-2">
           {[
-            { value: "popular", label: "Mais Popular" },
-            { value: "price-low", label: "Menor Preço" },
-            { value: "price-high", label: "Maior Preço" },
-            { value: "newest", label: "Mais Recente" },
+            { value: "popular", label: "Mais populares" },
+            { value: "price-low", label: "Menor preço" },
+            { value: "price-high", label: "Maior preço" },
+            { value: "newest", label: "Mais recentes" },
           ].map((option) => (
-            <label
-              key={option.value}
-              className="flex items-center gap-3 cursor-pointer group"
-            >
+            <label key={option.value} className="flex cursor-pointer items-center gap-3">
               <input
                 type="radio"
                 name="sort"
                 value={option.value}
                 checked={sortBy === option.value}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="w-4 h-4 text-primary accent-primary"
+                className="h-4 w-4 accent-primary"
               />
-              <span className="text-sm text-foreground group-hover:text-primary transition-colors">
-                {option.label}
-              </span>
+              <span className="text-sm text-foreground">{option.label}</span>
             </label>
           ))}
         </div>
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
-          Faixa de Preço
+        <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-foreground">
+          Faixa de preço
         </h3>
-        <div className="space-y-3">
-          <div className="flex gap-2">
-            <input
-              type="number"
-              placeholder="Min"
-              className="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-            <input
-              type="number"
-              placeholder="Max"
-              className="flex-1 px-3 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-          </div>
-          <Button
-            variant="outline"
-            className="w-full border-primary text-primary hover:bg-primary/5"
-          >
-            Aplicar Filtro
-          </Button>
+        <div className="grid grid-cols-2 gap-2">
+          <input
+            type="number"
+            placeholder="Min"
+            className="rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:border-primary"
+          />
+          <input
+            type="number"
+            placeholder="Max"
+            className="rounded-lg border border-border bg-white px-3 py-2 text-sm outline-none focus:border-primary"
+          />
         </div>
+        <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/5">
+          Aplicar filtro
+        </Button>
       </div>
 
-      <div className="space-y-3 pt-4 border-t border-border">
-        <h3 className="text-sm font-semibold text-foreground">Filtros Ativos</h3>
+      <div className="space-y-3 pt-2">
+        <h3 className="text-xs font-bold uppercase tracking-[0.18em] text-foreground">
+          Filtros ativos
+        </h3>
         <div className="flex flex-wrap gap-2">
           {selected !== "all" && (
             <Badge
               variant="secondary"
-              className="bg-primary/10 text-primary border-primary/20 cursor-pointer hover:bg-primary/20"
+              className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-primary"
             >
-              {CATEGORIES.find((c) => c.id === selected)?.label}
+              {CATEGORIES.find((category) => category.id === selected)?.label}
               <button
                 onClick={() => handleCategoryChange("all")}
                 className="ml-2 text-primary/70 hover:text-primary"
               >
-                ✕
+                ×
               </button>
             </Badge>
           )}

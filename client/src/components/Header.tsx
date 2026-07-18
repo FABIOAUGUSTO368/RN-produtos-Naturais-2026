@@ -1,4 +1,4 @@
-import { ShoppingCart, Search, Menu, X } from "lucide-react";
+import { Menu, Search, ShoppingCart, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
@@ -6,66 +6,62 @@ export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-border transition-all duration-300">
-      <div className="container flex items-center justify-between h-16">
-        <div className="flex items-center gap-2">
+    <header className="sticky top-0 z-50 border-b border-border bg-white/95 backdrop-blur-sm transition-all duration-300">
+      <div className="container flex h-16 items-center justify-between">
+        <div className="flex items-center gap-3">
           <img
             src="/manus-storage/logo_leaf_de762ff6.png"
-            alt="RN Naturais"
-            className="w-8 h-8"
+            alt="RN Casa do Norte"
+            className="h-8 w-8"
           />
           <span
             className="text-xl font-bold text-primary"
             style={{ fontFamily: "Playfair Display" }}
           >
-            RN Naturais
+            RN Casa do Norte
           </span>
         </div>
 
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden items-center gap-8 md:flex">
           <a
-            href="#"
-            className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+            href="#cardapio"
+            className="text-sm font-medium text-foreground transition-colors hover:text-primary"
           >
-            Castanhas
+            Cardápio
           </a>
           <a
-            href="#"
-            className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+            href="#atendimento"
+            className="text-sm font-medium text-foreground transition-colors hover:text-primary"
           >
-            Chás
+            Atendimento
           </a>
           <a
-            href="#"
-            className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+            href="#pagamento"
+            className="text-sm font-medium text-foreground transition-colors hover:text-primary"
           >
-            Farinhas
+            Pagamento
           </a>
           <a
-            href="#"
-            className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+            href="#avaliacao"
+            className="text-sm font-medium text-foreground transition-colors hover:text-primary"
           >
-            Sobre
+            Avaliação
           </a>
         </nav>
 
         <div className="flex items-center gap-4">
-          <div className="hidden lg:flex items-center gap-2 bg-muted rounded-full px-3 py-2">
-            <Search className="w-4 h-4 text-muted-foreground" />
+          <div className="hidden items-center gap-2 rounded-full bg-muted px-3 py-2 lg:flex">
+            <Search className="h-4 w-4 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Buscar produtos..."
-              className="bg-transparent text-sm outline-none w-32"
+              placeholder="Buscar carne, cuscuz..."
+              className="w-32 bg-transparent text-sm outline-none"
             />
           </div>
 
-          <Button
-            variant="ghost"
-            size="icon"
-            className="relative hover:bg-primary/10"
-          >
-            <ShoppingCart className="w-5 h-5 text-primary" />
-            <span className="absolute top-0 right-0 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center font-bold">
+          <Button variant="ghost" size="icon" className="relative hover:bg-primary/10">
+            <ShoppingCart className="h-5 w-5 text-primary" />
+            <span className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
               0
             </span>
           </Button>
@@ -76,32 +72,32 @@ export default function Header() {
             className="md:hidden"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
       </div>
 
       {isMenuOpen && (
-        <div className="md:hidden border-t border-border bg-white">
-          <nav className="container py-4 flex flex-col gap-4">
-            <a href="#" className="text-sm font-medium text-foreground hover:text-primary">
-              Castanhas
+        <div className="border-t border-border bg-white md:hidden">
+          <nav className="container flex flex-col gap-4 py-4">
+            <a href="#cardapio" className="text-sm font-medium text-foreground hover:text-primary">
+              Cardápio
             </a>
-            <a href="#" className="text-sm font-medium text-foreground hover:text-primary">
-              Chás
+            <a href="#atendimento" className="text-sm font-medium text-foreground hover:text-primary">
+              Atendimento
             </a>
-            <a href="#" className="text-sm font-medium text-foreground hover:text-primary">
-              Farinhas
+            <a href="#pagamento" className="text-sm font-medium text-foreground hover:text-primary">
+              Pagamento
             </a>
-            <a href="#" className="text-sm font-medium text-foreground hover:text-primary">
-              Sobre
+            <a href="#avaliacao" className="text-sm font-medium text-foreground hover:text-primary">
+              Avaliação
             </a>
-            <div className="flex items-center gap-2 bg-muted rounded-full px-3 py-2 mt-2">
-              <Search className="w-4 h-4 text-muted-foreground" />
+            <div className="mt-2 flex items-center gap-2 rounded-full bg-muted px-3 py-2">
+              <Search className="h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Buscar..."
-                className="bg-transparent text-sm outline-none flex-1"
+                className="flex-1 bg-transparent text-sm outline-none"
               />
             </div>
           </nav>

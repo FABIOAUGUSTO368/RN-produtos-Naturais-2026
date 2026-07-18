@@ -10,6 +10,8 @@ interface ProductCardProps {
   category: string;
   price: number;
   image: string;
+  description?: string;
+  unit?: string;
   badge?: string;
   badgeVariant?: "special" | "premium" | "certified";
 }
@@ -22,11 +24,12 @@ const WEIGHTS = [
 ];
 
 export default function ProductCard({
-  id,
   name,
   category,
   price,
   image,
+  description,
+  unit = "/kg",
   badge,
   badgeVariant = "certified",
 }: ProductCardProps) {
@@ -37,28 +40,26 @@ export default function ProductCard({
   const finalPrice = (price * weightMultiplier).toFixed(2);
 
   const badgeColors = {
-    special: "bg-red-100 text-red-700 border-red-200",
+    special: "bg-rose-100 text-rose-700 border-rose-200",
     premium: "bg-amber-100 text-amber-700 border-amber-200",
-    certified: "bg-green-100 text-green-700 border-green-200",
+    certified: "bg-emerald-100 text-emerald-700 border-emerald-200",
   };
 
   return (
-    <div className="group relative bg-white rounded-xl overflow-hidden border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-lg product-card-hover">
-      {/* Image Container */}
-      <div className="relative overflow-hidden bg-muted h-64 md:h-72">
+    <div className="group relative overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
+      <div className="relative bg-[#f6efe0]">
         <img
           src={image}
           alt={name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+          className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
         />
 
-        {/* Badge */}
         {badge && (
-          <div className="absolute top-3 left-3">
+          <div className="absolute left-3 top-3">
             <Badge
               variant="outline"
               className={cn(
-                "border font-semibold text-xs",
+                "rounded-full border px-2.5 py-0.5 text-[11px] font-semibold shadow-sm",
                 badgeColors[badgeVariant]
               )}
             >
@@ -67,52 +68,48 @@ export default function ProductCard({
           </div>
         )}
 
-        {/* Wishlist Button */}
         <button
           onClick={() => setIsWishlisted(!isWishlisted)}
-          className="absolute top-3 right-3 bg-white rounded-full p-2 shadow-md hover:shadow-lg transition-all"
+          className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-white/95 text-foreground shadow-sm transition hover:bg-white"
         >
           <Heart
             className={cn(
-              "w-5 h-5 transition-colors",
-              isWishlisted
-                ? "fill-red-500 text-red-500"
-                : "text-muted-foreground hover:text-red-500"
+              "h-4 w-4 transition-colors",
+              isWishlisted ? "fill-rose-500 text-rose-500" : "text-foreground/70"
             )}
           />
         </button>
       </div>
 
-      {/* Content */}
-      <div className="p-4 space-y-4">
-        {/* Category & Name */}
-        <div>
-          <p className="text-xs font-semibold text-primary uppercase tracking-wide">
+      <div className="space-y-4 p-4">
+        <div className="space-y-2">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-700">
             {category}
           </p>
-          <h3
-            className="text-lg font-semibold text-foreground mt-1 line-clamp-2"
-            style={{ fontFamily: "Playfair Display" }}
-          >
+          <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-foreground">
             {name}
           </h3>
+          {description && (
+            <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+              {description}
+            </p>
+          )}
         </div>
 
-        {/* Weight Selector */}
         <div className="space-y-2">
-          <label className="text-xs font-semibold text-muted-foreground uppercase">
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
             Escolha o peso
-          </label>
+          </p>
           <div className="grid grid-cols-4 gap-2">
             {WEIGHTS.map((weight) => (
               <button
                 key={weight.value}
                 onClick={() => setSelectedWeight(weight.value)}
                 className={cn(
-                  "py-2 px-2 rounded-lg text-xs font-semibold transition-all border",
+                  "rounded-lg border px-2 py-1.5 text-[11px] font-semibold transition-all",
                   selectedWeight === weight.value
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-muted text-foreground border-border hover:border-primary/50"
+                    ? "border-emerald-700 bg-emerald-700 text-white"
+                    : "border-border bg-[#f3f3f1] text-foreground hover:border-emerald-400"
                 )}
               >
                 {weight.label}
@@ -121,34 +118,19 @@ export default function ProductCard({
           </div>
         </div>
 
-        {/* Price */}
-        <div className="flex items-baseline gap-2">
-          <span
-            className="text-2xl font-bold text-primary"
-            style={{ fontFamily: "Playfair Display" }}
-          >
+        <div className="flex items-end gap-2">
+          <span className="text-[28px] font-bold leading-none text-emerald-800">
             R$ {finalPrice}
           </span>
-          <span className="text-xs text-muted-foreground">/kg</span>
+          <span className="pb-1 text-xs text-muted-foreground">{unit}</span>
         </div>
 
-        {/* Add to Cart Button */}
-        <Button
-          className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-lg gap-2 group/btn btn-press"
-        >
-          <ShoppingCart className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
+        <Button className="h-9 w-full rounded-md bg-emerald-800 text-sm font-semibold text-white hover:bg-emerald-900">
+          <ShoppingCart className="mr-2 h-4 w-4" />
           Adicionar ao Carrinho
         </Button>
 
-        {/* WhatsApp Contact */}
-        <button className="w-full py-2 px-3 rounded-lg border border-green-200 bg-green-50 text-green-700 text-sm font-semibold hover:bg-green-100 transition-colors flex items-center justify-center gap-2">
-          <svg
-            className="w-4 h-4"
-            fill="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.67-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.076 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421-7.403h-.004a9.87 9.87 0 00-4.255.949c-1.238.503-2.37 1.236-3.356 2.241-1.645 1.69-2.633 3.93-2.633 6.158 0 2.227.988 4.468 2.633 6.158 1.645 1.69 3.817 2.633 6.157 2.633 2.34 0 4.512-.943 6.157-2.633 1.645-1.69 2.633-3.931 2.633-6.158 0-2.227-.988-4.468-2.633-6.158-1.645-1.69-3.817-2.633-6.157-2.633z" />
-          </svg>
+        <button className="flex h-9 w-full items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100">
           Fale conosco
         </button>
       </div>

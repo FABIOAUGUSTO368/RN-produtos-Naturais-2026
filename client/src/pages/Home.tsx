@@ -3,61 +3,91 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import CategoryFilters from "@/components/CategoryFilters";
 import ProductCard from "@/components/ProductCard";
+import StoreExperience from "@/components/StoreExperience";
 
 const PRODUCTS = [
   {
     id: "1",
-    name: "Castanha de Caju W1",
-    category: "Castanhas",
-    price: 74.9,
-    image: "/manus-storage/product_castanha_6f2ce45e.png",
-    badge: "Oferta Especial",
-    badgeVariant: "special" as const,
-  },
-  {
-    id: "2",
-    name: "Damasco Turco Premium",
-    category: "Frutas Secas",
-    price: 49.9,
-    image: "/manus-storage/product_cha_0bd0c440.png",
-    badge: "Selecionado",
+    name: "Carne de Sol do Sertão",
+    categoryId: "carnes secas",
+    category: "Carnes secas",
+    price: 39.9,
+    unit: "/kg",
+    image: "/menu-images/carne-de-sol.jpg",
+    description: "Pedaços curados no ponto, ideais para baião, panelada e pratos regionais.",
+    badge: "Mais pedido",
     badgeVariant: "premium" as const,
   },
   {
+    id: "2",
+    name: "Cuscuz Nordestino com Manteiga",
+    categoryId: "cuscuz e massas",
+    category: "Cuscuz e massas",
+    price: 14.9,
+    unit: "/kg",
+    image: "/menu-images/cuscuz-nordestino.jpg",
+    description: "Flocos macios com manteiga e preparo rápido para café da manhã ou jantar.",
+    badge: "Tradicional",
+    badgeVariant: "certified" as const,
+  },
+  {
     id: "3",
-    name: "Hibisco Desidratado",
-    category: "Chás",
-    price: 32.0,
-    image: "/manus-storage/product_cha_0bd0c440.png",
-    badge: "Oferta Especial",
+    name: "Cuscuz Tradicional da Casa",
+    categoryId: "cuscuz e massas",
+    category: "Cuscuz e massas",
+    price: 13.4,
+    unit: "/kg",
+    image: "/menu-images/cuscuz-tradicional.jpg",
+    description: "Versão rústica e caprichada para acompanhar carne seca, queijo ou ovos.",
+    badge: "Clássico",
     badgeVariant: "special" as const,
   },
   {
     id: "4",
-    name: "Farinha de Amêndoas Premium",
+    name: "Farinha de Mandioca Fina",
+    categoryId: "farinhas",
     category: "Farinhas",
-    price: 85.0,
-    image: "/manus-storage/product_castanha_6f2ce45e.png",
-    badgeVariant: "premium" as const,
-  },
-  {
-    id: "5",
-    name: "Mel Silvestre Orgânico",
-    category: "Suplementos",
-    price: 28.9,
-    image: "/manus-storage/product_cha_0bd0c440.png",
-    badge: "Granel Certificado",
+    price: 11.8,
+    unit: "/kg",
+    image: "/menu-images/farinha-mandioca.jpg",
+    description: "Leve e soltinha para pirão, feijão e acompanhamentos do dia a dia.",
+    badge: "Seleção",
     badgeVariant: "certified" as const,
   },
   {
-    id: "6",
-    name: "Castanha do Pará Selecionada",
-    category: "Castanhas",
-    price: 65.0,
-    image: "/manus-storage/product_castanha_6f2ce45e.png",
+    id: "5",
+    name: "Queijo Coalho na Brasa",
+    categoryId: "laticínios",
+    category: "Laticínios",
+    price: 27.9,
+    unit: "/kg",
+    image: "/menu-images/queijo-coalho.jpg",
+    description: "Grelhado no ponto e perfeito para lanche, porção ou café da tarde.",
+    badge: "Sabor da casa",
     badgeVariant: "premium" as const,
   },
+  {
+    id: "6",
+    name: "Baião de Dois da Casa",
+    categoryId: "pratos regionais",
+    category: "Pratos regionais",
+    price: 31.5,
+    unit: "/kg",
+    image: "/menu-images/baiao-de-dois.jpg",
+    description: "Mistura regional com feijão, arroz e queijo para um almoço completo.",
+    badge: "Prato pronto",
+    badgeVariant: "special" as const,
+  },
 ];
+
+const CATEGORY_TITLES: Record<string, string> = {
+  all: "Cardápio da Casa do Norte",
+  "carnes secas": "Carnes secas",
+  "cuscuz e massas": "Cuscuz e massas",
+  farinhas: "Farinhas",
+  laticínios: "Laticínios",
+  "pratos regionais": "Pratos regionais",
+};
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("all");
@@ -65,20 +95,31 @@ export default function Home() {
   const filteredProducts =
     selectedCategory === "all"
       ? PRODUCTS
-      : PRODUCTS.filter((product) =>
-          product.category.toLowerCase().includes(selectedCategory)
-        );
+      : PRODUCTS.filter((product) => product.categoryId === selectedCategory);
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
       <Hero />
 
-      <section className="py-16 md:py-24 bg-gradient-to-b from-background to-accent/3">
+      <section id="cardapio" className="bg-[#fbf8f2] py-14 md:py-16">
         <div className="container">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <aside className="lg:col-span-1">
-              <div className="sticky top-24 bg-white rounded-xl p-6 border border-border">
+          <div className="mb-8 flex max-w-4xl flex-col gap-3">
+            <h2
+              className="text-3xl font-bold text-foreground md:text-4xl"
+              style={{ fontFamily: "Playfair Display" }}
+            >
+              {CATEGORY_TITLES[selectedCategory] ?? "Cardápio da Casa do Norte"}
+            </h2>
+            <p className="text-sm text-muted-foreground md:text-base">
+              {filteredProducts.length} produto
+              {filteredProducts.length !== 1 ? "s" : ""} encontrado
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-8 items-start lg:grid-cols-[270px_minmax(0,1fr)]">
+            <aside className="lg:sticky lg:top-24">
+              <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
                 <CategoryFilters
                   selectedCategory={selectedCategory}
                   onCategoryChange={setSelectedCategory}
@@ -86,29 +127,13 @@ export default function Home() {
               </div>
             </aside>
 
-            <main className="lg:col-span-3">
-              <div className="mb-8 animate-fade-up">
-                <h2
-                  className="text-3xl md:text-4xl font-bold text-foreground mb-2"
-                  style={{ fontFamily: "Playfair Display" }}
-                >
-                  {selectedCategory === "all"
-                    ? "Todos os Produtos"
-                    : selectedCategory}
-                </h2>
-                <p className="text-muted-foreground">
-                  {filteredProducts.length} produto
-                  {filteredProducts.length !== 1 ? "s" : ""} encontrado
-                  {filteredProducts.length !== 1 ? "s" : ""}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <main>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
                 {filteredProducts.map((product, index) => (
                   <div
                     key={product.id}
                     className="animate-fade-up"
-                    style={{ animationDelay: `${index * 80}ms` }}
+                    style={{ animationDelay: `${index * 60}ms` }}
                   >
                     <ProductCard {...product} />
                   </div>
@@ -116,15 +141,15 @@ export default function Home() {
               </div>
 
               {filteredProducts.length === 0 && (
-                <div className="text-center py-16">
-                  <p className="text-lg text-muted-foreground mb-4">
-                    Nenhum produto encontrado nesta categoria.
+                <div className="py-16 text-center">
+                  <p className="mb-4 text-lg text-muted-foreground">
+                    Nenhum item encontrado nesta categoria.
                   </p>
                   <button
                     onClick={() => setSelectedCategory("all")}
-                    className="text-primary font-semibold hover:underline"
+                    className="font-semibold text-primary hover:underline"
                   >
-                    Ver todos os produtos
+                    Voltar para todos os produtos
                   </button>
                 </div>
               )}
@@ -133,104 +158,21 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="py-16 md:py-24 bg-primary text-primary-foreground">
+      <StoreExperience />
+
+      <section className="bg-primary py-16 text-primary-foreground">
         <div className="container max-w-2xl">
-          <div className="text-center space-y-6">
-            <h2
-              className="text-3xl md:text-4xl font-bold"
-              style={{ fontFamily: "Playfair Display" }}
-            >
-              Receba Ofertas Exclusivas
+          <div className="space-y-5 text-center">
+            <h2 className="text-3xl font-bold md:text-4xl" style={{ fontFamily: "Playfair Display" }}>
+              Uma vitrine fictícia pronta para vender mais
             </h2>
-            <p className="text-lg opacity-90">
-              Inscreva-se na nossa newsletter e fique por dentro das novidades,
-              promoções e dicas de bem-estar.
+            <p className="text-base opacity-90 md:text-lg">
+              Este layout já combina produtos regionais, imagens coerentes com cada item e
+              interações que simulam a experiência completa da compra.
             </p>
-            <form className="flex flex-col sm:flex-row gap-3">
-              <input
-                type="email"
-                placeholder="Seu e-mail"
-                className="flex-1 px-4 py-3 rounded-lg bg-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50"
-              />
-              <button
-                type="submit"
-                className="px-6 py-3 bg-white text-primary font-semibold rounded-lg hover:bg-white/90 transition-colors"
-              >
-                Inscrever
-              </button>
-            </form>
           </div>
         </div>
       </section>
-
-      <footer className="bg-foreground text-white py-12">
-        <div className="container">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="font-bold mb-4">Sobre Nós</h3>
-              <p className="text-sm text-white/70">
-                RN Naturais Premium oferece os melhores produtos naturais a
-                granel para sua saúde e bem-estar.
-              </p>
-            </div>
-            <div>
-              <h3 className="font-bold mb-4">Categorias</h3>
-              <ul className="text-sm text-white/70 space-y-2">
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Castanhas
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Chás
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-white transition-colors">
-                    Farinhas
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold mb-4">Contato</h3>
-              <ul className="text-sm text-white/70 space-y-2">
-                <li>
-                  <a
-                    href="mailto:contato@rnnaturais.com"
-                    className="hover:text-white transition-colors"
-                  >
-                    contato@rnnaturais.com
-                  </a>
-                </li>
-                <li>
-                  <a
-                    href="tel:+5584999999999"
-                    className="hover:text-white transition-colors"
-                  >
-                    (84) 99999-9999
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="font-bold mb-4">Redes Sociais</h3>
-              <div className="flex gap-4">
-                <a href="#" className="text-white/70 hover:text-white transition-colors">
-                  Instagram
-                </a>
-                <a href="#" className="text-white/70 hover:text-white transition-colors">
-                  Facebook
-                </a>
-              </div>
-            </div>
-          </div>
-          <div className="border-t border-white/10 pt-8 text-center text-sm text-white/60">
-            <p>&copy; 2026 RN Naturais Premium. Todos os direitos reservados.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }
