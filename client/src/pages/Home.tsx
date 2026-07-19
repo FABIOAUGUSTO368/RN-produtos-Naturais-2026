@@ -1,105 +1,137 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import CategoryFilters from "@/components/CategoryFilters";
 import ProductCard from "@/components/ProductCard";
 import StoreExperience from "@/components/StoreExperience";
+import CartSheet, { type CheckoutPayload } from "@/components/CartSheet";
+import { PRODUCTS, CATEGORY_TITLES, type CartItem, type StoreProduct, toCartItem } from "@/lib/store";
+import { toast } from "sonner";
 
-const PRODUCTS = [
-  {
-    id: "1",
-    name: "Carne de Sol do Sertão",
-    categoryId: "carnes secas",
-    category: "Carnes secas",
-    price: 39.9,
-    unit: "/kg",
-    image: "/menu-images/carne-de-sol.jpg",
-    description: "Pedaços curados no ponto, ideais para baião, panelada e pratos regionais.",
-    badge: "Mais pedido",
-    badgeVariant: "premium" as const,
-  },
-  {
-    id: "2",
-    name: "Cuscuz Nordestino com Manteiga",
-    categoryId: "cuscuz e massas",
-    category: "Cuscuz e massas",
-    price: 14.9,
-    unit: "/kg",
-    image: "/menu-images/cuscuz-nordestino.jpg",
-    description: "Flocos macios com manteiga e preparo rápido para café da manhã ou jantar.",
-    badge: "Tradicional",
-    badgeVariant: "certified" as const,
-  },
-  {
-    id: "3",
-    name: "Cuscuz Tradicional da Casa",
-    categoryId: "cuscuz e massas",
-    category: "Cuscuz e massas",
-    price: 13.4,
-    unit: "/kg",
-    image: "/menu-images/cuscuz-tradicional.jpg",
-    description: "Versão rústica e caprichada para acompanhar carne seca, queijo ou ovos.",
-    badge: "Clássico",
-    badgeVariant: "special" as const,
-  },
-  {
-    id: "4",
-    name: "Farinha de Mandioca Fina",
-    categoryId: "farinhas",
-    category: "Farinhas",
-    price: 11.8,
-    unit: "/kg",
-    image: "/menu-images/farinha-mandioca.jpg",
-    description: "Leve e soltinha para pirão, feijão e acompanhamentos do dia a dia.",
-    badge: "Seleção",
-    badgeVariant: "certified" as const,
-  },
-  {
-    id: "5",
-    name: "Queijo Coalho na Brasa",
-    categoryId: "laticínios",
-    category: "Laticínios",
-    price: 27.9,
-    unit: "/kg",
-    image: "/menu-images/queijo-coalho.jpg",
-    description: "Grelhado no ponto e perfeito para lanche, porção ou café da tarde.",
-    badge: "Sabor da casa",
-    badgeVariant: "premium" as const,
-  },
-  {
-    id: "6",
-    name: "Baião de Dois da Casa",
-    categoryId: "pratos regionais",
-    category: "Pratos regionais",
-    price: 31.5,
-    unit: "/kg",
-    image: "/menu-images/baiao-de-dois.jpg",
-    description: "Mistura regional com feijão, arroz e queijo para um almoço completo.",
-    badge: "Prato pronto",
-    badgeVariant: "special" as const,
-  },
-];
+const CART_STORAGE_KEY = "rn-casa-do-norte-cart";
 
-const CATEGORY_TITLES: Record<string, string> = {
-  all: "Cardápio da Casa do Norte",
-  "carnes secas": "Carnes secas",
-  "cuscuz e massas": "Cuscuz e massas",
-  farinhas: "Farinhas",
-  laticínios: "Laticínios",
-  "pratos regionais": "Pratos regionais",
-};
+function loadCart(): CartItem[] {
+  if (typeof window === "undefined") {
+    return [];
+  }
+
+  try {
+    const raw = window.localStorage.getItem(CART_STORAGE_KEY);
+    if (!raw) {
+      return [];
+    }
+
+    const parsed = JSON.parse(raw) as CartItem[];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [cart, setCart] = useState<CartItem[]>(() => loadCart());
+  const [isCartOpen, setIsCartOpen] = useState(false);
+
+  useEffect(() => {
+    window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+  }, [cart]);
+
+  const cartCount = useMemo(() => cart.reduce((total, item) => total + item.quantity, 0), [cart]);
+
+  const subtotal = useMemo(
+    () => Number(cart.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2)),
+    [cart]
+  );
+
+  const shipping = subtotal >= 120 || cart.length === 0 ? 0 : 18.9;
+  const total = Number((subtotal + shipping).toFixed(2));
 
   const filteredProducts =
     selectedCategory === "all"
       ? PRODUCTS
       : PRODUCTS.filter((product) => product.categoryId === selectedCategory);
 
+  const addToCart = (product: StoreProduct, weight: number) => {
+    const cartItem = toCartItem(product, weight);
+    setCart((current) => {
+      const existingIndex = current.findIndex(
+        (item) => item.productId === cartItem.productId && item.weight === cartItem.weight
+      );
+
+      if (existingIndex >= 0) {
+        return current.map((item, index) =>
+          index === existingIndex ? { ...item, quantity: item.quantity + 1 } : item
+        );
+      }
+
+      return [...current, cartItem];
+    });
+    toast.success(`${product.name} adicionado ao carrinho`);
+    setIsCartOpen(true);
+  };
+
+  const increaseItem = (item: CartItem) => {
+    setCart((current) =>
+      current.map((currentItem) =>
+        currentItem.productId === item.productId && currentItem.weight === item.weight
+          ? { ...currentItem, quantity: currentItem.quantity + 1 }
+          : currentItem
+      )
+    );
+  };
+
+  const decreaseItem = (item: CartItem) => {
+    setCart((current) =>
+      current
+        .map((currentItem) =>
+          currentItem.productId === item.productId && currentItem.weight === item.weight
+            ? { ...currentItem, quantity: currentItem.quantity - 1 }
+            : currentItem
+        )
+        .filter((currentItem) => currentItem.quantity > 0)
+    );
+  };
+
+  const removeItem = (item: CartItem) => {
+    setCart((current) =>
+      current.filter(
+        (currentItem) => !(currentItem.productId === item.productId && currentItem.weight === item.weight)
+      )
+    );
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
+
+  const submitOrder = async (payload: CheckoutPayload) => {
+    const response = await fetch("/api/orders", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      throw new Error("Não foi possível finalizar o pedido.");
+    }
+
+    const data = (await response.json()) as {
+      order?: { orderNumber?: string; total?: number };
+    };
+
+    toast.success("Pedido finalizado com sucesso", {
+      description: data.order
+        ? `Pedido ${data.order.orderNumber} salvo com total de R$ ${data.order.total?.toFixed(2)}.`
+        : "Pedido salvo na API local com sucesso.",
+    });
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header cartCount={cartCount} onCartClick={() => setIsCartOpen(true)} />
       <Hero />
 
       <section id="cardapio" className="bg-[#fbf8f2] py-14 md:py-16">
@@ -112,12 +144,11 @@ export default function Home() {
               {CATEGORY_TITLES[selectedCategory] ?? "Cardápio da Casa do Norte"}
             </h2>
             <p className="text-sm text-muted-foreground md:text-base">
-              {filteredProducts.length} produto
-              {filteredProducts.length !== 1 ? "s" : ""} encontrado
+              {filteredProducts.length} produto{filteredProducts.length !== 1 ? "s" : ""} encontrado
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 items-start lg:grid-cols-[270px_minmax(0,1fr)]">
+          <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[270px_minmax(0,1fr)]">
             <aside className="lg:sticky lg:top-24">
               <div className="rounded-2xl border border-border bg-white p-5 shadow-sm">
                 <CategoryFilters
@@ -135,7 +166,7 @@ export default function Home() {
                     className="animate-fade-up"
                     style={{ animationDelay: `${index * 60}ms` }}
                   >
-                    <ProductCard {...product} />
+                    <ProductCard {...product} onAddToCart={addToCart} />
                   </div>
                 ))}
               </div>
@@ -173,6 +204,20 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      <CartSheet
+        open={isCartOpen}
+        onOpenChange={setIsCartOpen}
+        items={cart}
+        subtotal={subtotal}
+        shipping={shipping}
+        total={total}
+        onIncrease={increaseItem}
+        onDecrease={decreaseItem}
+        onRemove={removeItem}
+        onClear={clearCart}
+        onSubmitOrder={submitOrder}
+      />
     </div>
   );
 }

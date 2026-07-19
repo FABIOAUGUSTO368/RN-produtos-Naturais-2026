@@ -2,7 +2,12 @@ import { Menu, Search, ShoppingCart, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-export default function Header() {
+interface HeaderProps {
+  cartCount?: number;
+  onCartClick?: () => void;
+}
+
+export default function Header({ cartCount = 0, onCartClick }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
@@ -14,37 +19,22 @@ export default function Header() {
             alt="RN Casa do Norte"
             className="h-8 w-8"
           />
-          <span
-            className="text-xl font-bold text-primary"
-            style={{ fontFamily: "Playfair Display" }}
-          >
+          <span className="text-xl font-bold text-primary" style={{ fontFamily: "Playfair Display" }}>
             RN Casa do Norte
           </span>
         </div>
 
         <nav className="hidden items-center gap-8 md:flex">
-          <a
-            href="#cardapio"
-            className="text-sm font-medium text-foreground transition-colors hover:text-primary"
-          >
+          <a href="#cardapio" className="text-sm font-medium text-foreground transition-colors hover:text-primary">
             Cardápio
           </a>
-          <a
-            href="#atendimento"
-            className="text-sm font-medium text-foreground transition-colors hover:text-primary"
-          >
-            Atendimento
+          <a href="#atendimento" className="text-sm font-medium text-foreground transition-colors hover:text-primary">
+            Experiência
           </a>
-          <a
-            href="#pagamento"
-            className="text-sm font-medium text-foreground transition-colors hover:text-primary"
-          >
-            Pagamento
+          <a href="#pagamento" className="text-sm font-medium text-foreground transition-colors hover:text-primary">
+            Checkout
           </a>
-          <a
-            href="#avaliacao"
-            className="text-sm font-medium text-foreground transition-colors hover:text-primary"
-          >
+          <a href="#avaliacao" className="text-sm font-medium text-foreground transition-colors hover:text-primary">
             Avaliação
           </a>
         </nav>
@@ -59,10 +49,10 @@ export default function Header() {
             />
           </div>
 
-          <Button variant="ghost" size="icon" className="relative hover:bg-primary/10">
+          <Button variant="ghost" size="icon" className="relative hover:bg-primary/10" onClick={onCartClick}>
             <ShoppingCart className="h-5 w-5 text-primary" />
-            <span className="absolute right-0 top-0 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
-              0
+            <span className="absolute right-0 top-0 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-xs font-bold text-white">
+              {cartCount}
             </span>
           </Button>
 
@@ -84,10 +74,10 @@ export default function Header() {
               Cardápio
             </a>
             <a href="#atendimento" className="text-sm font-medium text-foreground hover:text-primary">
-              Atendimento
+              Experiência
             </a>
             <a href="#pagamento" className="text-sm font-medium text-foreground hover:text-primary">
-              Pagamento
+              Checkout
             </a>
             <a href="#avaliacao" className="text-sm font-medium text-foreground hover:text-primary">
               Avaliação

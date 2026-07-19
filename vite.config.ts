@@ -4,6 +4,7 @@ import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { createOrder, getLatestOrder, readOrders } from "./server/orderStore.ts";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -202,7 +203,67 @@ function vitePluginStorageProxy(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), vitePluginStorageProxy()];
+function vitePluginOrdersApi(): Plugin {
+  return {
+    name: "manus-orders-api",
+    configureServer(server: ViteDevServer) {
+      server.middlewares.use(async (req, res, next) => {
+        const url = req.url ?? "";
+        if (!url.startsWith("/api/orders")) {
+          return next();
+        }
+
+        if (req.method === "GET" && url === "/api/orders") {
+          const orders = await readOrders();
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ orders }));
+          return;
+        }
+
+        if (req.method === "GET" && url === "/api/orders/latest") {
+          const order = await getLatestOrder();
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ order }));
+          return;
+        }
+
+        if (req.method === "POST" && url === "/api/orders") {
+          try {
+            const body = await new Promise<string>((resolve, reject) => {
+              let data = "";
+              req.on("data", (chunk) => {
+                data += chunk.toString();
+              });
+              req.on("end", () => resolve(data));
+              req.on("error", reject);
+            });
+
+            const payload = JSON.parse(body);
+            const order = await createOrder(payload);
+            res.writeHead(201, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ order }));
+            return;
+          } catch (error) {
+            res.writeHead(400, { "Content-Type": "application/json" });
+            res.end(JSON.stringify({ error: String(error) }));
+            return;
+          }
+        }
+
+        next();
+      });
+    },
+  };
+}
+
+const plugins = [
+  react(),
+  tailwindcss(),
+  vitePluginManusRuntime(),
+  vitePluginManusDebugCollector(),
+  vitePluginStorageProxy(),
+  vitePluginOrdersApi(),
+];
 
 export default defineConfig({
   plugins,

@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createOrder, getLatestOrder, readOrders } from "./orderStore.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,6 +10,26 @@ const __dirname = path.dirname(__filename);
 async function startServer() {
   const app = express();
   const server = createServer(app);
+  app.use(express.json());
+
+  app.get("/api/orders", async (_req, res) => {
+    const orders = await readOrders();
+    res.json({ orders });
+  });
+
+  app.get("/api/orders/latest", async (_req, res) => {
+    const order = await getLatestOrder();
+    res.json({ order });
+  });
+
+  app.post("/api/orders", async (req, res) => {
+    try {
+      const order = await createOrder(req.body);
+      res.status(201).json({ order });
+    } catch (error) {
+      res.status(400).json({ error: String(error) });
+    }
+  });
 
   // Serve static files from dist/public in production
   const staticPath =

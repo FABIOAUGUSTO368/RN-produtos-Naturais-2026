@@ -3,17 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { StoreProduct } from "@/lib/store";
 
-interface ProductCardProps {
-  id: string;
-  name: string;
-  category: string;
-  price: number;
-  image: string;
-  description?: string;
-  unit?: string;
-  badge?: string;
-  badgeVariant?: "special" | "premium" | "certified";
+interface ProductCardProps extends StoreProduct {
+  onAddToCart?: (product: StoreProduct, weight: number) => void;
 }
 
 const WEIGHTS = [
@@ -24,20 +17,14 @@ const WEIGHTS = [
 ];
 
 export default function ProductCard({
-  name,
-  category,
-  price,
-  image,
-  description,
-  unit = "/kg",
-  badge,
-  badgeVariant = "certified",
+  onAddToCart,
+  ...product
 }: ProductCardProps) {
   const [selectedWeight, setSelectedWeight] = useState(500);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
   const weightMultiplier = selectedWeight / 500;
-  const finalPrice = (price * weightMultiplier).toFixed(2);
+  const finalPrice = (product.price * weightMultiplier).toFixed(2);
 
   const badgeColors = {
     special: "bg-rose-100 text-rose-700 border-rose-200",
@@ -49,21 +36,21 @@ export default function ProductCard({
     <div className="group relative overflow-hidden rounded-2xl border border-emerald-200 bg-white shadow-[0_6px_20px_rgba(15,23,42,0.04)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_34px_rgba(15,23,42,0.08)]">
       <div className="relative bg-[#f6efe0]">
         <img
-          src={image}
-          alt={name}
+          src={product.image}
+          alt={product.name}
           className="h-64 w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]"
         />
 
-        {badge && (
+        {product.badge && (
           <div className="absolute left-3 top-3">
             <Badge
               variant="outline"
               className={cn(
                 "rounded-full border px-2.5 py-0.5 text-[11px] font-semibold shadow-sm",
-                badgeColors[badgeVariant]
+                badgeColors[product.badgeVariant ?? "certified"]
               )}
             >
-              {badge}
+              {product.badge}
             </Badge>
           </div>
         )}
@@ -84,16 +71,14 @@ export default function ProductCard({
       <div className="space-y-4 p-4">
         <div className="space-y-2">
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-700">
-            {category}
+            {product.category}
           </p>
           <h3 className="line-clamp-2 text-[15px] font-semibold leading-snug text-foreground">
-            {name}
+            {product.name}
           </h3>
-          {description && (
-            <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-              {description}
-            </p>
-          )}
+          <p className="line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+            {product.description}
+          </p>
         </div>
 
         <div className="space-y-2">
@@ -122,10 +107,13 @@ export default function ProductCard({
           <span className="text-[28px] font-bold leading-none text-emerald-800">
             R$ {finalPrice}
           </span>
-          <span className="pb-1 text-xs text-muted-foreground">{unit}</span>
+          <span className="pb-1 text-xs text-muted-foreground">{product.unit}</span>
         </div>
 
-        <Button className="h-9 w-full rounded-md bg-emerald-800 text-sm font-semibold text-white hover:bg-emerald-900">
+        <Button
+          className="h-9 w-full rounded-md bg-emerald-800 text-sm font-semibold text-white hover:bg-emerald-900"
+          onClick={() => onAddToCart?.(product, selectedWeight)}
+        >
           <ShoppingCart className="mr-2 h-4 w-4" />
           Adicionar ao Carrinho
         </Button>
