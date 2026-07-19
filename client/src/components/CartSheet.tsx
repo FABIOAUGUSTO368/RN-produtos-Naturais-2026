@@ -30,6 +30,15 @@ export interface CheckoutPayload {
   items: CartItem[];
 }
 
+export interface CheckoutResult {
+  order: {
+    id: string;
+    orderNumber: string;
+  };
+  initPoint: string;
+  sandboxInitPoint?: string | null;
+}
+
 interface CartSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -41,7 +50,7 @@ interface CartSheetProps {
   onDecrease: (item: CartItem) => void;
   onRemove: (item: CartItem) => void;
   onClear: () => void;
-  onSubmitOrder: (payload: CheckoutPayload) => Promise<void>;
+  onSubmitOrder: (payload: CheckoutPayload) => Promise<CheckoutResult>;
 }
 
 const initialForm = {
@@ -85,7 +94,7 @@ export default function CartSheet({
 
     setIsSubmitting(true);
     try {
-      await onSubmitOrder({
+      const result = await onSubmitOrder({
         customer: {
           name: form.name,
           email: form.email,
@@ -105,9 +114,15 @@ export default function CartSheet({
         items,
       });
 
+      const paymentUrl = result.initPoint || result.sandboxInitPoint;
+      if (!paymentUrl) {
+        throw new Error("Não foi possível gerar o link de pagamento.");
+      }
+
       setForm(initialForm);
       onClear();
       onOpenChange(false);
+      window.location.assign(paymentUrl);
     } catch (error) {
       toast.error("Não foi possível concluir o pedido.", {
         description: String(error),

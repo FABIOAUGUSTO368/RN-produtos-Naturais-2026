@@ -4,7 +4,7 @@ import Hero from "@/components/Hero";
 import CategoryFilters from "@/components/CategoryFilters";
 import ProductCard from "@/components/ProductCard";
 import StoreExperience from "@/components/StoreExperience";
-import CartSheet, { type CheckoutPayload } from "@/components/CartSheet";
+import CartSheet, { type CheckoutPayload, type CheckoutResult } from "@/components/CartSheet";
 import { PRODUCTS, CATEGORY_TITLES, type CartItem, type StoreProduct, toCartItem } from "@/lib/store";
 import { toast } from "sonner";
 
@@ -105,8 +105,8 @@ export default function Home() {
     setCart([]);
   };
 
-  const submitOrder = async (payload: CheckoutPayload) => {
-    const response = await fetch("/api/orders", {
+  const submitOrder = async (payload: CheckoutPayload): Promise<CheckoutResult> => {
+    const response = await fetch("/api/checkout", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -115,18 +115,17 @@ export default function Home() {
     });
 
     if (!response.ok) {
-      throw new Error("Não foi possível finalizar o pedido.");
+      const errorBody = (await response.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(errorBody?.error ?? "Não foi possível finalizar o pedido.");
     }
 
-    const data = (await response.json()) as {
-      order?: { orderNumber?: string; total?: number };
-    };
+    const data = (await response.json()) as CheckoutResult;
 
-    toast.success("Pedido finalizado com sucesso", {
-      description: data.order
-        ? `Pedido ${data.order.orderNumber} salvo com total de R$ ${data.order.total?.toFixed(2)}.`
-        : "Pedido salvo na API local com sucesso.",
+    toast.success("Pedido criado com sucesso", {
+      description: `Pedido ${data.order.orderNumber} encaminhado para pagamento.`,
     });
+
+    return data;
   };
 
   return (

@@ -4,7 +4,7 @@ import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
-import { createOrder, getLatestOrder, readOrders } from "./server/orderStore.ts";
+import { handleApiRequest } from "./server/api-handler.ts";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -203,54 +203,57 @@ function vitePluginStorageProxy(): Plugin {
   };
 }
 
-function vitePluginOrdersApi(): Plugin {
+async function readRequestBody(req: any) {
+  if (typeof req.body === "string") {
+    return req.body;
+  }
+
+  if (req.body !== undefined) {
+    return JSON.stringify(req.body);
+  }
+
+  return await new Promise<string | undefined>((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk: Buffer) => {
+      body += chunk.toString();
+    });
+    req.on("end", () => resolve(body || undefined));
+    req.on("error", reject);
+  });
+}
+
+function vitePluginApiRoutes(): Plugin {
   return {
-    name: "manus-orders-api",
-    configureServer(server: ViteDevServer) {
+    name: "manus-api-routes",
+    async configureServer(server: ViteDevServer) {
       server.middlewares.use(async (req, res, next) => {
         const url = req.url ?? "";
-        if (!url.startsWith("/api/orders")) {
+        if (!url.startsWith("/api/")) {
           return next();
         }
 
-        if (req.method === "GET" && url === "/api/orders") {
-          const orders = await readOrders();
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ orders }));
-          return;
-        }
+        try {
+          const response = await handleApiRequest({
+            method: req.method,
+            url: `http://${req.headers.host ?? "localhost"}${url}`,
+            headers: req.headers as Record<string, string | string[] | undefined>,
+            body: await readRequestBody(req),
+          });
 
-        if (req.method === "GET" && url === "/api/orders/latest") {
-          const order = await getLatestOrder();
-          res.writeHead(200, { "Content-Type": "application/json" });
-          res.end(JSON.stringify({ order }));
-          return;
-        }
-
-        if (req.method === "POST" && url === "/api/orders") {
-          try {
-            const body = await new Promise<string>((resolve, reject) => {
-              let data = "";
-              req.on("data", (chunk) => {
-                data += chunk.toString();
-              });
-              req.on("end", () => resolve(data));
-              req.on("error", reject);
-            });
-
-            const payload = JSON.parse(body);
-            const order = await createOrder(payload);
-            res.writeHead(201, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ order }));
-            return;
-          } catch (error) {
-            res.writeHead(400, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ error: String(error) }));
-            return;
+          if (!response) {
+            return next();
           }
-        }
 
-        next();
+          res.writeHead(response.status, response.headers);
+          res.end(response.body);
+        } catch (error) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(
+            JSON.stringify({
+              error: error instanceof Error ? error.message : "Erro inesperado no servidor.",
+            })
+          );
+        }
       });
     },
   };
@@ -262,7 +265,7 @@ const plugins = [
   vitePluginManusRuntime(),
   vitePluginManusDebugCollector(),
   vitePluginStorageProxy(),
-  vitePluginOrdersApi(),
+  vitePluginApiRoutes(),
 ];
 
 export default defineConfig({
