@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ShoppingCart, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { createProductMessage, openWhatsApp } from "@/lib/whatsapp";
 import type { StoreProduct } from "@/lib/store";
 
 interface ProductCardProps extends StoreProduct {
@@ -25,6 +26,7 @@ export default function ProductCard({
 
   const weightMultiplier = selectedWeight / 500;
   const finalPrice = (product.price * weightMultiplier).toFixed(2);
+  const selectedWeightLabel = WEIGHTS.find((weight) => weight.value === selectedWeight)?.label ?? "500g";
 
   const badgeColors = {
     special: "bg-rose-100 text-rose-700 border-rose-200",
@@ -118,8 +120,12 @@ export default function ProductCard({
           Adicionar ao Carrinho
         </Button>
 
-        <button className="flex h-9 w-full items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100">
-          Fale conosco
+        <button
+          type="button"
+          onClick={() => openWhatsApp(createProductMessage(product.name, selectedWeightLabel, finalPrice))}
+          className="flex h-9 w-full items-center justify-center rounded-md border border-emerald-200 bg-emerald-50 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-100"
+        >
+          Falar no WhatsApp
         </button>
       </div>
     </div>

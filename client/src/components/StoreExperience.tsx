@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import { createSupportMessage, openWhatsApp } from "@/lib/whatsapp";
 import {
   Banknote,
   Bot,
@@ -102,7 +103,7 @@ export default function StoreExperience() {
     {
       id: 1,
       role: "bot",
-      text: "Olá! Sou o assistente da Casa do Norte RN. Posso tirar dúvidas sobre produtos, pagamento, entrega e avaliação.",
+      text: "Olá! Sou o atendimento da Casa do Norte RN. Clique em uma pergunta ou escreva sua dúvida para abrir uma conversa no WhatsApp.",
     },
   ]);
   const [draft, setDraft] = useState("");
@@ -139,14 +140,17 @@ export default function StoreExperience() {
       return;
     }
 
+    openWhatsApp(createSupportMessage(text));
     setMessages((current) => [...current, { id: nextIdRef.current++, role: "user", text }]);
     setDraft("");
 
-    const reply = getBotReply(text);
-
     window.setTimeout(() => {
-      appendBotMessage(reply);
-    }, 350);
+      appendBotMessage("Abri o WhatsApp com sua mensagem pronta. Se o navegador bloquear a nova aba, clique em Enviar novamente.");
+    }, 250);
+
+    toast.success("WhatsApp aberto", {
+      description: "A mensagem foi preparada para o atendimento da loja.",
+    });
   };
 
   const startCheckoutDemo = () => {
@@ -195,11 +199,11 @@ export default function StoreExperience() {
             className="text-3xl font-bold text-foreground md:text-4xl"
             style={{ fontFamily: "Playfair Display" }}
           >
-            Chat, pagamento, satisfação e status do pedido
+            WhatsApp, pagamento, satisfação e status do pedido
           </h2>
           <p className="text-base text-muted-foreground md:text-lg">
-            Esta área simula as principais etapas da compra em uma loja de Casa do Norte, com uma
-            experiência visual clara para o cliente e fácil de demonstrar em apresentação.
+            Esta área conecta o cliente ao WhatsApp da loja e também apresenta as principais
+            etapas da compra em uma experiência visual clara.
           </p>
         </div>
 
@@ -212,12 +216,12 @@ export default function StoreExperience() {
                     <MessageCircleMore className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-foreground">Bot de conversas</h3>
-                    <p className="text-sm text-muted-foreground">Atendimento em tempo real para o cliente</p>
+                    <h3 className="text-lg font-semibold text-foreground">Atendimento via WhatsApp</h3>
+                    <p className="text-sm text-muted-foreground">Perguntas prontas e mensagem direta para a loja</p>
                   </div>
                 </div>
                 <Badge variant="secondary" className="rounded-full bg-emerald-100 text-emerald-700">
-                  Online
+                  WhatsApp
                 </Badge>
               </div>
 
@@ -258,7 +262,7 @@ export default function StoreExperience() {
                   <Input
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
-                    placeholder="Escreva sua dúvida..."
+                    placeholder="Escreva sua dúvida para enviar no WhatsApp..."
                     className="flex-1"
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
@@ -268,7 +272,7 @@ export default function StoreExperience() {
                     }}
                   />
                   <Button onClick={() => sendMessage()} className="gap-2">
-                    Enviar
+                    Enviar no WhatsApp
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>
@@ -280,12 +284,12 @@ export default function StoreExperience() {
                   <p className="mt-1">Produto, valor, peso e entrega</p>
                 </div>
                 <div className="rounded-xl border border-border bg-white p-3">
-                  <p className="font-semibold text-foreground">Resposta imediata</p>
-                  <p className="mt-1">Ideal para demos e atendimento rápido</p>
+                  <p className="font-semibold text-foreground">Mensagem pronta</p>
+                  <p className="mt-1">O texto já sai organizado para o WhatsApp</p>
                 </div>
                 <div className="rounded-xl border border-border bg-white p-3">
-                  <p className="font-semibold text-foreground">Integração futura</p>
-                  <p className="mt-1">Pode virar WhatsApp ou suporte real</p>
+                  <p className="font-semibold text-foreground">WhatsApp ativo</p>
+                  <p className="mt-1">Abre conversa direta com a loja</p>
                 </div>
               </div>
             </div>

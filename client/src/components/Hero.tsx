@@ -19,7 +19,7 @@ export default function Hero() {
                 variant="outline"
                 className="rounded-full border-[#d98b41]/40 bg-[#d98b41]/5 px-3 py-1 text-[#d98b41]"
               >
-                Chat ao vivo
+                WhatsApp
               </Badge>
               <Badge
                 variant="outline"
@@ -58,7 +58,7 @@ export default function Hero() {
                 className="rounded-full border-primary px-6 font-semibold text-primary btn-press hover:bg-primary/5"
                 onClick={() => document.getElementById("atendimento")?.scrollIntoView({ behavior: "smooth" })}
               >
-                Falar com o bot
+                Falar no WhatsApp
                 <MessageCircleMore className="ml-2 h-4 w-4" />
               </Button>
             </div>
