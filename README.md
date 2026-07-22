@@ -42,6 +42,17 @@ pnpm build
 pnpm start
 ```
 
+### Docker
+
+Para subir em uma VPS com Docker:
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
+
+O banco SQLite fica persistido no volume `./data` da VPS.
+
 ## Estrutura principal
 
 - `client/` interface web
