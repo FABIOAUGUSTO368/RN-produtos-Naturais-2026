@@ -1,4 +1,5 @@
-import { MercadoPagoConfig, Payment, Preference } from "mercadopago";
+import { randomUUID } from "node:crypto";
+import { MercadoPagoConfig, Payment } from "mercadopago";
 import { centsToReais, type OrderRecord } from "./store-db";
 
 function getMercadoPagoClient() {
@@ -12,12 +13,59 @@ function getMercadoPagoClient() {
   });
 }
 
-export async function createMercadoPagoPreference(order: OrderRecord, baseUrl: string) {
-  const client = getMercadoPagoClient();
-  const preference = new Preference(client);
+function getMercadoPagoAccessToken() {
+  const accessToken = process.env.MERCADO_PAGO_ACCESS_TOKEN?.trim();
+  if (!accessToken) {
+    throw new Error("Configure MERCADO_PAGO_ACCESS_TOKEN para ativar o pagamento real.");
+  }
 
-  const response = await preference.create({
-    body: {
+  return accessToken;
+}
+
+function getMercadoPagoErrorMessage(body: string) {
+  try {
+    const parsed = JSON.parse(body) as { message?: unknown; error?: unknown; cause?: unknown };
+    const message = parsed.message ?? parsed.error ?? parsed.cause;
+    return typeof message === "string" ? message : body;
+  } catch {
+    return body;
+  }
+}
+
+function getWebhookUrl() {
+  const webhookUrl = process.env.MERCADO_PAGO_WEBHOOK_URL?.trim();
+
+  // Mercado Pago needs to reach this address from the internet. Localhost only
+  // works on the merchant's own computer, so it must not be sent in development.
+  return webhookUrl?.startsWith("https://") ? webhookUrl : undefined;
+}
+
+function getPreferenceReturnUrls(baseUrl: string, orderId: string) {
+  const normalizedBaseUrl = baseUrl.replace(/\/+$/, "");
+  const isPublicHttpsUrl = /^https:\/\/.+/i.test(normalizedBaseUrl);
+
+  if (!isPublicHttpsUrl) {
+    return undefined;
+  }
+
+  return {
+    success: `${normalizedBaseUrl}/checkout/result?order_id=${orderId}`,
+    failure: `${normalizedBaseUrl}/checkout/result?order_id=${orderId}`,
+    pending: `${normalizedBaseUrl}/checkout/result?order_id=${orderId}`,
+  };
+}
+
+export async function createMercadoPagoPreference(order: OrderRecord, baseUrl: string) {
+  const backUrls = getPreferenceReturnUrls(baseUrl, order.id);
+
+  const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getMercadoPagoAccessToken()}`,
+      "Content-Type": "application/json",
+      "X-Idempotency-Key": randomUUID(),
+    },
+    body: JSON.stringify({
       items: order.items.map((item) => ({
         id: item.productId,
         title: item.name,
@@ -26,24 +74,32 @@ export async function createMercadoPagoPreference(order: OrderRecord, baseUrl: s
         currency_id: "BRL",
       })),
       external_reference: order.id,
-      notification_url: process.env.MERCADO_PAGO_WEBHOOK_URL ?? `${baseUrl}/api/payments/mercadopago/webhook`,
-      auto_return: "approved",
-      back_urls: {
-        success: `${baseUrl}/checkout/result?order_id=${order.id}`,
-        failure: `${baseUrl}/checkout/result?order_id=${order.id}`,
-        pending: `${baseUrl}/checkout/result?order_id=${order.id}`,
-      },
+      ...(getWebhookUrl() ? { notification_url: getWebhookUrl() } : {}),
+      ...(backUrls ? { auto_return: "approved", back_urls: backUrls } : {}),
       metadata: {
         orderId: order.id,
         orderNumber: order.orderNumber,
       },
-    },
+    }),
   });
 
+  const responseBody = await response.text();
+  if (!response.ok) {
+    const details = getMercadoPagoErrorMessage(responseBody);
+    throw new Error(`Mercado Pago recusou a criacao do checkout (HTTP ${response.status}): ${details || "sem detalhes"}`);
+  }
+
+  let preference: { id?: string; init_point?: string; sandbox_init_point?: string };
+  try {
+    preference = JSON.parse(responseBody) as typeof preference;
+  } catch {
+    throw new Error("Mercado Pago retornou uma resposta vazia ao criar o checkout.");
+  }
+
   return {
-    preferenceId: response.id ?? null,
-    initPoint: response.init_point ?? response.sandbox_init_point ?? "",
-    sandboxInitPoint: response.sandbox_init_point ?? null,
+    preferenceId: preference.id ?? null,
+    initPoint: preference.init_point ?? preference.sandbox_init_point ?? "",
+    sandboxInitPoint: preference.sandbox_init_point ?? null,
   };
 }
 
