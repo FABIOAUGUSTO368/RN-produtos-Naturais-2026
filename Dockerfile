@@ -33,16 +33,16 @@ RUN pnpm install --prod --frozen-lockfile && pnpm store prune
 
 COPY --from=build /app/dist ./dist
 
-COPY <<'EOF' /usr/local/bin/docker-entrypoint.sh
-#!/bin/sh
-set -eu
-
-mkdir -p /app/data
-chown -R appuser:appuser /app/data
-exec su -s /bin/sh appuser -c "node dist/index.js"
-EOF
-
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+RUN set -eux; \
+  printf '%s\n' \
+    '#!/bin/sh' \
+    'set -eu' \
+    '' \
+    'mkdir -p /app/data' \
+    'chown -R appuser:appuser /app/data' \
+    'exec su -s /bin/sh appuser -c "node dist/index.js"' \
+    > /usr/local/bin/docker-entrypoint.sh; \
+  chmod +x /usr/local/bin/docker-entrypoint.sh
 
 EXPOSE 3000
 
