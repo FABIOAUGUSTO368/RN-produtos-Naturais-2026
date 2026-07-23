@@ -4,6 +4,7 @@ import Hero from "@/components/Hero";
 import CategoryFilters from "@/components/CategoryFilters";
 import ProductCard from "@/components/ProductCard";
 import WhatsAppFloatingButton from "@/components/WhatsAppFloatingButton";
+import StoreAssistantChat from "@/components/StoreAssistantChat";
 import CartSheet, { type CheckoutPayload, type CheckoutResult } from "@/components/CartSheet";
 import { PRODUCTS, CATEGORY_TITLES, type CartItem, type StoreProduct, toCartItem } from "@/lib/store";
 import { toast } from "sonner";
@@ -189,6 +190,7 @@ export default function Home() {
       </section>
 
       <WhatsAppFloatingButton />
+      <StoreAssistantChat />
 
       <section className="bg-primary py-16 text-primary-foreground">
         <div className="container max-w-2xl">
