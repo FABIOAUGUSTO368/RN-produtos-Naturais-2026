@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import type { CartItem } from "@/lib/store";
 
@@ -94,14 +95,11 @@ export default function CartSheet({
   const [form, setForm] = useState(initialForm);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pixPayment, setPixPayment] = useState<CheckoutResult["pix"]>(null);
+  const [pixOrderNumber, setPixOrderNumber] = useState("");
   const [isPixDialogOpen, setIsPixDialogOpen] = useState(false);
   const [isPixCopied, setIsPixCopied] = useState(false);
 
   const itemCount = useMemo(() => items.reduce((acc, item) => acc + item.quantity, 0), [items]);
-
-  const closePixDialog = () => {
-    setIsPixDialogOpen(false);
-  };
 
   const copyPixCode = async () => {
     if (!pixPayment?.qrCode) {
@@ -152,6 +150,7 @@ export default function CartSheet({
         }
 
         setPixPayment(result.pix);
+        setPixOrderNumber(result.order.orderNumber);
         setIsPixDialogOpen(true);
         setForm(initialForm);
         onClear();
@@ -373,76 +372,99 @@ export default function CartSheet({
         onOpenChange={(open) => {
           setIsPixDialogOpen(open);
           if (!open) {
-            closePixDialog();
+            setPixPayment(null);
+            setPixOrderNumber("");
+            setIsPixCopied(false);
           }
         }}
       >
-        <DialogContent className="sm:max-w-[760px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <span className="grid h-10 w-10 place-items-center rounded-full bg-emerald-100 text-emerald-700">
-                <QrCode className="h-5 w-5" />
-              </span>
-              Pagamento Pix gerado
-            </DialogTitle>
-            <DialogDescription>
-              Escaneie o QR Code ou copie o código Pix para concluir o pagamento.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-[840px] rounded-[28px] border border-emerald-100 bg-gradient-to-b from-white via-[#f9fbf7] to-[#f5f9f1] p-0 shadow-[0_30px_80px_rgba(16,24,40,0.22)]">
+          <div className="border-b border-emerald-100 bg-[radial-gradient(circle_at_top_left,rgba(34,197,94,0.08),transparent_42%)] px-6 pt-6 pb-5 sm:px-8">
+            <DialogHeader className="text-left">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100">PIX disponível</Badge>
+                {pixOrderNumber ? <Badge variant="secondary">Pedido {pixOrderNumber}</Badge> : null}
+              </div>
+              <DialogTitle className="mt-3 flex items-center gap-3 text-2xl text-emerald-950">
+                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-600 text-white shadow-sm">
+                  <QrCode className="h-5 w-5" />
+                </span>
+                Pagamento PIX gerado com sucesso
+              </DialogTitle>
+              <DialogDescription className="max-w-2xl text-sm leading-6 text-slate-600">
+                Escaneie o QR Code ou copie o código Pix abaixo para concluir o pagamento. Assim que o banco
+                confirmar a transação, o pedido seguirá para processamento automaticamente.
+              </DialogDescription>
+            </DialogHeader>
+          </div>
 
           {pixPayment ? (
-            <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)]">
-              <div className="rounded-2xl border border-border bg-white p-4">
-                <div className="overflow-hidden rounded-xl border border-border bg-[#fbf8f2] p-3">
-                  <img
-                    src={`data:image/png;base64,${pixPayment.qrCodeBase64}`}
-                    alt="QR Code Pix"
-                    className="mx-auto aspect-square w-full max-w-[240px] rounded-lg object-contain"
-                  />
+            <div className="grid gap-6 px-6 py-6 sm:px-8 lg:grid-cols-[300px_minmax(0,1fr)]">
+              <div className="rounded-[24px] border border-emerald-100 bg-white p-4 shadow-[0_12px_30px_rgba(16,24,40,0.08)]">
+                <div className="rounded-[20px] border border-emerald-100 bg-[linear-gradient(180deg,#f8fff8_0%,#eef8ee_100%)] p-4">
+                  <div className="rounded-[18px] bg-white p-3 shadow-inner">
+                    <img
+                      src={`data:image/png;base64,${pixPayment.qrCodeBase64}`}
+                      alt="QR Code Pix"
+                      className="mx-auto aspect-square w-full max-w-[240px] rounded-[14px] object-contain"
+                    />
+                  </div>
                 </div>
-                <p className="mt-3 text-xs text-muted-foreground">
-                  Abra o aplicativo do banco, leia o QR Code e conclua o pagamento.
-                </p>
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm font-semibold text-emerald-950">Escaneie com seu banco</p>
+                  <p className="text-sm leading-6 text-slate-600">
+                    Abra o app do banco, selecione PIX e leia o QR Code para pagar sem digitar nada.
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-4">
-                <div className="rounded-2xl border border-border bg-[#fbf8f2] p-4">
-                  <p className="text-sm font-semibold text-foreground">Copia e cola Pix</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Copie o código abaixo e cole no app do seu banco.
-                  </p>
-                  <div className="mt-3 rounded-xl border border-border bg-white p-3">
+                <div className="rounded-[24px] border border-slate-200 bg-white p-5 shadow-[0_12px_30px_rgba(16,24,40,0.06)]">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                        Copia e cola PIX
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Use esse código se preferir pagar manualmente no aplicativo do banco.
+                      </p>
+                    </div>
+                    <Badge className="bg-emerald-50 text-emerald-800 hover:bg-emerald-50">Status: {pixPayment.status}</Badge>
+                  </div>
+
+                  <div className="mt-4 rounded-[18px] border border-slate-200 bg-slate-50 p-4">
                     <Textarea
                       readOnly
                       value={pixPayment.qrCode}
-                      className="min-h-[120px] resize-none border-0 bg-transparent p-0 font-mono text-xs leading-5"
+                      className="min-h-[132px] resize-none border-0 bg-transparent p-0 font-mono text-[11px] leading-5 text-slate-700 shadow-none outline-none"
                     />
                   </div>
-                  <div className="mt-3 flex flex-wrap gap-3">
-                    <Button type="button" onClick={copyPixCode} className="gap-2">
+
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    <Button type="button" onClick={copyPixCode} className="gap-2 rounded-full px-5">
                       {isPixCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                      {isPixCopied ? "Copiado" : "Copiar código"}
+                      {isPixCopied ? "Código copiado" : "Copiar código"}
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => window.open(pixPayment.ticketUrl, "_blank", "noopener,noreferrer")}
-                      className="gap-2"
+                      className="gap-2 rounded-full px-5"
                     >
                       <ExternalLink className="h-4 w-4" />
-                      Abrir instruções do Pix
+                      Ver instruções do Pix
                     </Button>
                   </div>
                 </div>
 
-                <div className="grid gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
-                  <p className="font-semibold">Pedido aguardando pagamento</p>
-                  <p>
-                    Assim que o Mercado Pago confirmar o Pix, o pedido seguirá automaticamente para o painel e
-                    para o rastreamento de status.
+                <div className="grid gap-3 rounded-[24px] border border-emerald-200 bg-emerald-50 p-5 text-sm text-emerald-950">
+                  <p className="font-semibold">Seu pedido está reservado</p>
+                  <p className="leading-6 text-emerald-950/90">
+                    Assim que o pagamento for confirmado pelo Mercado Pago, o pedido será atualizado para
+                    preparação e você poderá acompanhar tudo pelo painel.
                   </p>
-                  <p className="text-xs text-emerald-800">
-                    Status atual: {pixPayment.status} • {pixPayment.statusDetail}
+                  <p className="text-xs font-medium text-emerald-800">
+                    Situação técnica: {pixPayment.status} • {pixPayment.statusDetail}
                   </p>
                 </div>
               </div>
