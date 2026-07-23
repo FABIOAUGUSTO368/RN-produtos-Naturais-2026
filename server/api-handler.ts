@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   attachPaymentPreference,
+  attachPaymentData,
   createOrder,
   getOverview,
   getOrderById,
@@ -15,7 +16,7 @@ import {
   type CheckoutPayload,
   type OrderStatus,
 } from "./store-db.js";
-import { createMercadoPagoPreference, fetchMercadoPagoPayment } from "./payments.js";
+import { createMercadoPagoPreference, createMercadoPagoPixPayment, fetchMercadoPagoPayment } from "./payments.js";
 
 const checkoutSchema = z.object({
   customer: z.object({
@@ -136,6 +137,21 @@ export async function handleApiRequest(request: ApiRequestLike) {
       const payload = checkoutSchema.parse(parseJsonBody(request.body)) as CheckoutPayload;
       const order = await createOrder(payload);
       try {
+        if (payload.paymentMethod === "pix") {
+          const pix = await createMercadoPagoPixPayment(order, getBaseUrl(headers));
+          if (pix.paymentId) {
+            await attachPaymentData(order.id, { paymentId: pix.paymentId });
+          }
+
+          const freshOrder = await getOrderById(order.id);
+
+          return jsonResponse(201, {
+            order: freshOrder,
+            paymentMethod: payload.paymentMethod,
+            pix,
+          });
+        }
+
         const preference = await createMercadoPagoPreference(order, getBaseUrl(headers));
         if (preference.preferenceId) {
           await attachPaymentPreference(order.id, preference.preferenceId);
@@ -145,6 +161,7 @@ export async function handleApiRequest(request: ApiRequestLike) {
 
         return jsonResponse(201, {
           order: freshOrder,
+          paymentMethod: payload.paymentMethod,
           initPoint: preference.initPoint,
           sandboxInitPoint: preference.sandboxInitPoint,
         });

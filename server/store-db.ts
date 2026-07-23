@@ -766,6 +766,13 @@ export async function createOrder(payload: CheckoutPayload) {
 }
 
 export async function attachPaymentPreference(orderId: string, preferenceId: string) {
+  return attachPaymentData(orderId, { paymentPreferenceId: preferenceId });
+}
+
+export async function attachPaymentData(
+  orderId: string,
+  data: { paymentId?: string | null; paymentPreferenceId?: string | null }
+) {
   const db = await getDb();
   const order = await getOrderById(orderId);
   if (!order) {
@@ -774,8 +781,8 @@ export async function attachPaymentPreference(orderId: string, preferenceId: str
 
   run(
     db,
-    `UPDATE orders SET payment_preference_id = ?, updated_at = ? WHERE id = ?`,
-    [preferenceId, nowIso(), orderId]
+    `UPDATE orders SET payment_preference_id = ?, payment_id = ?, updated_at = ? WHERE id = ?`,
+    [data.paymentPreferenceId ?? null, data.paymentId ?? null, nowIso(), orderId]
   );
   await persist(db);
   return getOrderById(orderId);
