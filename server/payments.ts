@@ -113,10 +113,6 @@ export async function createMercadoPagoPreference(order: OrderRecord, baseUrl: s
       external_reference: order.id,
       ...(getWebhookUrl() ? { notification_url: getWebhookUrl() } : {}),
       ...(backUrls ? { auto_return: "approved", back_urls: backUrls } : {}),
-      metadata: {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-      },
     }),
   });
 
@@ -167,11 +163,6 @@ export async function createMercadoPagoPixPayment(order: OrderRecord, baseUrl: s
       },
       payer: {
         email: order.customer.email,
-      },
-      metadata: {
-        orderId: order.id,
-        orderNumber: order.orderNumber,
-        publicUrl: baseUrl,
       },
     }),
   });
