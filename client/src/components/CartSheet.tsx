@@ -403,11 +403,23 @@ export default function CartSheet({
               <div className="rounded-[24px] border border-emerald-100 bg-white p-4 shadow-[0_12px_30px_rgba(16,24,40,0.08)]">
                 <div className="rounded-[20px] border border-emerald-100 bg-[linear-gradient(180deg,#f8fff8_0%,#eef8ee_100%)] p-4">
                   <div className="rounded-[18px] bg-white p-3 shadow-inner">
-                    <img
-                      src={`data:image/png;base64,${pixPayment.qrCodeBase64}`}
-                      alt="QR Code Pix"
-                      className="mx-auto aspect-square w-full max-w-[240px] rounded-[14px] object-contain"
-                    />
+                    {pixPayment.qrCodeBase64 ? (
+                      <img
+                        src={`data:image/png;base64,${pixPayment.qrCodeBase64}`}
+                        alt="QR Code Pix"
+                        className="mx-auto aspect-square w-full max-w-[240px] rounded-[14px] object-contain"
+                      />
+                    ) : (
+                      <div className="flex aspect-square w-full max-w-[240px] items-center justify-center rounded-[14px] border border-dashed border-emerald-200 bg-emerald-50 px-4 text-center">
+                        <div className="space-y-2">
+                          <QrCode className="mx-auto h-8 w-8 text-emerald-600" />
+                          <p className="text-sm font-semibold text-emerald-950">QR Code indisponível</p>
+                          <p className="text-xs leading-5 text-slate-600">
+                            Use o código Pix copiado ou abra as instruções do pagamento.
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="mt-4 space-y-2">

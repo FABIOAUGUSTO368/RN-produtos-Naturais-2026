@@ -24,13 +24,36 @@ function getMercadoPagoAccessToken() {
 
 function getMercadoPagoErrorMessage(body: string) {
   try {
-    const parsed = JSON.parse(body) as { message?: unknown; error?: unknown; cause?: unknown };
+    const parsed = JSON.parse(body) as {
+      message?: unknown;
+      error?: unknown;
+      cause?: unknown;
+      errors?: Array<{ code?: unknown; message?: unknown; details?: unknown }>;
+    };
     const message = parsed.message ?? parsed.error ?? parsed.cause;
-    return typeof message === "string" ? message : body;
+    if (typeof message === "string" && message.trim()) {
+      return message;
+    }
+
+    if (Array.isArray(parsed.errors) && parsed.errors.length > 0) {
+      return parsed.errors
+        .map((entry) => {
+          const code = typeof entry.code === "string" ? entry.code : "";
+          const entryMessage = typeof entry.message === "string" ? entry.message : "";
+          return [code, entryMessage].filter(Boolean).join(": ");
+        })
+        .filter(Boolean)
+        .join(" | ");
+    }
+
+    return body;
   } catch {
     return body;
   }
 }
+
+const DEFAULT_PIX_TEST_EMAIL = "test_user_br@testuser.com";
+const DEFAULT_PIX_TEST_FIRST_NAME = "APRO";
 
 function getWebhookUrl() {
   const webhookUrl = process.env.MERCADO_PAGO_WEBHOOK_URL?.trim();
@@ -58,27 +81,48 @@ function getPreferenceReturnUrls(baseUrl: string, orderId: string) {
 type MercadoPagoPixTransactionData = {
   qr_code?: string;
   qr_code_base64?: string;
+  qr_code_based64?: string;
   ticket_url?: string;
 };
+
+function readPixTransactionData(source: any) {
+  if (!source || typeof source !== "object") {
+    return null;
+  }
+
+  const qrCode = String(source.qr_code ?? "");
+  const qrCodeBase64 = String(source.qr_code_base64 ?? source.qr_code_based64 ?? "");
+  const ticketUrl = String(source.ticket_url ?? "");
+
+  if (!qrCode && !qrCodeBase64 && !ticketUrl) {
+    return null;
+  }
+
+  return {
+    qrCode,
+    qrCodeBase64,
+    ticketUrl,
+  };
+}
 
 function extractPixTransactionData(payload: any) {
   const payment =
     payload?.transactions?.payments?.[0] ??
-    payload?.point_of_interaction?.transaction_data ??
     payload?.payment ??
+    payload?.point_of_interaction?.transaction_data ??
     null;
 
-  const paymentMethod = payment?.payment_method ?? payment ?? {};
-  const transactionData: MercadoPagoPixTransactionData =
-    paymentMethod?.qr_code || paymentMethod?.qr_code_base64 || paymentMethod?.ticket_url
-      ? paymentMethod
-      : payload?.point_of_interaction?.transaction_data ?? {};
+  const candidates = [
+    payment?.payment_method,
+    payment?.transaction_data,
+    payment,
+    payload?.transactions?.payments?.[0],
+    payload?.point_of_interaction?.transaction_data,
+    payload?.transaction_data,
+  ];
 
-  const qrCode = String(transactionData.qr_code ?? "");
-  const qrCodeBase64 = String(transactionData.qr_code_base64 ?? "");
-  const ticketUrl = String(transactionData.ticket_url ?? "");
-
-  if (!qrCode || !qrCodeBase64 || !ticketUrl) {
+  const transactionData = candidates.map(readPixTransactionData).find(Boolean);
+  if (!transactionData) {
     return null;
   }
 
@@ -86,16 +130,72 @@ function extractPixTransactionData(payload: any) {
     paymentId: String(payment?.id ?? payload?.id ?? ""),
     status: String(payment?.status ?? payload?.status ?? "pending"),
     statusDetail: String(payment?.status_detail ?? payload?.status_detail ?? "waiting_transfer"),
-    qrCode,
-    qrCodeBase64,
-    ticketUrl,
+    qrCode: transactionData.qrCode,
+    qrCodeBase64: transactionData.qrCodeBase64,
+    ticketUrl: transactionData.ticketUrl,
   };
+}
+
+async function fetchWithRetry(input: RequestInfo | URL, init: RequestInit, retries = 1) {
+  let lastError: unknown = null;
+
+  for (let attempt = 0; attempt <= retries; attempt += 1) {
+    try {
+      return await fetch(input, init);
+    } catch (error) {
+      lastError = error;
+      if (attempt < retries) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
+function buildPixPayer() {
+  // Pix em ambiente de teste precisa usar a conta comprador de teste do Mercado Pago.
+  return {
+    email: process.env.MERCADO_PAGO_PIX_TEST_EMAIL?.trim() || DEFAULT_PIX_TEST_EMAIL,
+    first_name: process.env.MERCADO_PAGO_PIX_TEST_FIRST_NAME?.trim() || DEFAULT_PIX_TEST_FIRST_NAME,
+  };
+}
+
+async function postMercadoPagoPixOrder(order: OrderRecord) {
+  return fetchWithRetry("https://api.mercadopago.com/v1/orders", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${getMercadoPagoAccessToken()}`,
+      "Content-Type": "application/json",
+      "X-Idempotency-Key": randomUUID(),
+    },
+    body: JSON.stringify({
+      type: "online",
+      total_amount: (order.totalCents / 100).toFixed(2),
+      external_reference: order.id,
+      processing_mode: "automatic",
+      ...(getWebhookUrl() ? { notification_url: getWebhookUrl() } : {}),
+      transactions: {
+        payments: [
+          {
+            amount: (order.totalCents / 100).toFixed(2),
+            payment_method: {
+              id: "pix",
+              type: "bank_transfer",
+            },
+            expiration_time: "PT24H",
+          },
+        ],
+      },
+      payer: buildPixPayer(),
+    }),
+  });
 }
 
 export async function createMercadoPagoPreference(order: OrderRecord, baseUrl: string) {
   const backUrls = getPreferenceReturnUrls(baseUrl, order.id);
 
-  const response = await fetch("https://api.mercadopago.com/checkout/preferences", {
+  const response = await fetchWithRetry("https://api.mercadopago.com/checkout/preferences", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${getMercadoPagoAccessToken()}`,
@@ -137,37 +237,9 @@ export async function createMercadoPagoPreference(order: OrderRecord, baseUrl: s
 }
 
 export async function createMercadoPagoPixPayment(order: OrderRecord, baseUrl: string) {
-  const response = await fetch("https://api.mercadopago.com/v1/orders", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${getMercadoPagoAccessToken()}`,
-      "Content-Type": "application/json",
-      "X-Idempotency-Key": randomUUID(),
-    },
-    body: JSON.stringify({
-      type: "online",
-      total_amount: (order.totalCents / 100).toFixed(2),
-      external_reference: order.id,
-      processing_mode: "automatic",
-      ...(getWebhookUrl() ? { notification_url: getWebhookUrl() } : {}),
-      transactions: {
-        payments: [
-          {
-            amount: (order.totalCents / 100).toFixed(2),
-            payment_method: {
-              id: "pix",
-              type: "bank_transfer",
-            },
-          },
-        ],
-      },
-      payer: {
-        email: order.customer.email,
-      },
-    }),
-  });
-
+  const response = await postMercadoPagoPixOrder(order);
   const responseBody = await response.text();
+
   if (!response.ok) {
     const details = getMercadoPagoErrorMessage(responseBody);
     throw new Error(`Mercado Pago recusou a criacao do PIX (HTTP ${response.status}): ${details || "sem detalhes"}`);
@@ -177,12 +249,12 @@ export async function createMercadoPagoPixPayment(order: OrderRecord, baseUrl: s
   try {
     payload = JSON.parse(responseBody);
   } catch {
-    throw new Error("Mercado Pago retornou uma resposta vazia ao criar o PIX.");
+    throw new Error("Mercado Pago retornou uma resposta vazia ao criar o Pix.");
   }
 
   const pix = extractPixTransactionData(payload);
   if (!pix) {
-    throw new Error("Mercado Pago não retornou os dados do PIX.");
+    throw new Error("Mercado Pago não retornou os dados do Pix.");
   }
 
   return pix;
