@@ -3,7 +3,6 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import CategoryFilters from "@/components/CategoryFilters";
 import ProductCard from "@/components/ProductCard";
-import StoreExperience from "@/components/StoreExperience";
 import WhatsAppFloatingButton from "@/components/WhatsAppFloatingButton";
 import CartSheet, { type CheckoutPayload, type CheckoutResult } from "@/components/CartSheet";
 import { PRODUCTS, CATEGORY_TITLES, type CartItem, type StoreProduct, toCartItem } from "@/lib/store";
@@ -189,7 +188,6 @@ export default function Home() {
         </div>
       </section>
 
-      <StoreExperience />
       <WhatsAppFloatingButton />
 
       <section className="bg-primary py-16 text-primary-foreground">

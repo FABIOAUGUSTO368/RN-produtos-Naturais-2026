@@ -12,7 +12,7 @@ export default function Hero() {
       <div className="container grid gap-4 xl:grid-cols-[240px_minmax(0,1fr)_255px]">
         <aside className="rounded-2xl border border-emerald-950/10 bg-white p-5 shadow-sm">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-emerald-700">Compre por categoria</p>
-          <h1 className="mt-3 font-serif text-2xl font-bold leading-tight text-emerald-950">Sabores que aproximam o Nordeste</h1>
+          <h1 className="mt-3 font-serif text-2xl font-bold leading-tight text-emerald-950">Raízes do Nordeste, tradição que vende e chega à sua mesa</h1>
           <div className="mt-5 flex items-center rounded-lg border border-emerald-900/15 bg-[#f7faf5] px-3 py-2">
             <Search className="h-4 w-4 text-emerald-700" />
             <input className="ml-2 w-full bg-transparent text-xs outline-none placeholder:text-slate-400" placeholder="Buscar produtos" />
@@ -37,24 +37,24 @@ export default function Hero() {
             <img src="/menu-images/carne-de-sol.jpg" alt="Carne de sol preparada para a vitrine da Casa do Norte" className="absolute inset-0 h-full w-full object-cover opacity-70" />
             <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(2,44,34,0.96)_0%,rgba(3,79,57,0.78)_46%,rgba(3,79,57,0.13)_100%)]" />
             <div className="relative z-10 max-w-lg">
-              <span className="inline-flex rounded-full border border-emerald-200/50 bg-emerald-100/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-emerald-50">Ofertas e sabores regionais</span>
-              <h2 className="mt-5 font-serif text-4xl font-bold leading-[1.04] text-white md:text-5xl">Produtos da Casa do Norte, com praticidade de mercado moderno.</h2>
-              <p className="mt-5 max-w-md text-sm leading-relaxed text-emerald-50 md:text-base">Escolha os seus favoritos, combine pesos e finalize o pedido com acompanhamento em cada etapa.</p>
+              <span className="inline-flex rounded-full border border-emerald-200/50 bg-emerald-100/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-emerald-50">Ofertas da Casa do Norte</span>
+              <h2 className="mt-5 font-serif text-4xl font-bold leading-[1.04] text-white md:text-5xl">Compre agora os sabores mais pedidos do Nordeste, com preço justo e entrega ágil.</h2>
+              <p className="mt-5 max-w-md text-sm leading-relaxed text-emerald-50 md:text-base">Carnes secas, cuscuz, farinhas, temperos e itens regionais selecionados para quem quer praticidade, boa margem e compra rápida sem complicação.</p>
               <div className="mt-7 flex flex-wrap gap-3">
-                <Button className="rounded-lg bg-white px-5 font-bold text-emerald-900 hover:bg-emerald-50" onClick={() => document.getElementById("cardapio")?.scrollIntoView({ behavior: "smooth" })}>Ver cardapio <ArrowRight className="ml-2 h-4 w-4" /></Button>
-                <Button variant="outline" className="rounded-lg border-white/50 bg-white/10 px-5 font-bold text-white hover:bg-white/20 hover:text-white" onClick={() => openWhatsApp("Ola! Vim pelo site RN Casa do Norte e gostaria de atendimento.")}><MessageCircleMore className="mr-2 h-4 w-4" />Falar com a loja</Button>
+                <Button className="rounded-lg bg-white px-5 font-bold text-emerald-900 hover:bg-emerald-50" onClick={() => document.getElementById("cardapio")?.scrollIntoView({ behavior: "smooth" })}>Ver ofertas <ArrowRight className="ml-2 h-4 w-4" /></Button>
+                <Button variant="outline" className="rounded-lg border-white/50 bg-white/10 px-5 font-bold text-white hover:bg-white/20 hover:text-white" onClick={() => openWhatsApp("Olá! Vim pelo site Casa do Norte Raízes do Nordeste e gostaria de atendimento.")}><MessageCircleMore className="mr-2 h-4 w-4" />Falar com a loja</Button>
               </div>
             </div>
             <div className="absolute bottom-0 right-0 hidden max-w-[240px] rounded-tl-2xl bg-white/95 p-5 text-emerald-950 shadow-lg md:block">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Destaque da semana</p>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-emerald-700">Mais vendido da semana</p>
               <p className="mt-2 font-serif text-xl font-bold">Carne de sol sertaneja</p>
-              <p className="mt-1 text-xs text-slate-600">Cortes selecionados para receitas com sabor de origem.</p>
+              <p className="mt-1 text-xs text-slate-600">Produto campeão para quem quer vender mais ou abastecer a casa com um sabor que chama atenção.</p>
             </div>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-xl border border-emerald-950/10 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Preco de atacado</p><p className="mt-1 text-sm font-medium text-slate-700">Mais economia por unidade</p></div>
-            <div className="rounded-xl border border-emerald-950/10 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Acesso rapido</p><p className="mt-1 text-sm font-medium text-slate-700">Pedido pelo cardapio digital</p></div>
-            <div className="rounded-xl border border-emerald-950/10 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Marca confiavel</p><p className="mt-1 text-sm font-medium text-slate-700">Produtos regionais selecionados</p></div>
+            <div className="rounded-xl border border-emerald-950/10 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Mais saída</p><p className="mt-1 text-sm font-medium text-slate-700">Itens campeões de venda para giro rápido</p></div>
+            <div className="rounded-xl border border-emerald-950/10 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Compra sem demora</p><p className="mt-1 text-sm font-medium text-slate-700">Pedido digital com atendimento direto no WhatsApp</p></div>
+            <div className="rounded-xl border border-emerald-950/10 bg-white p-4"><p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Pronto para vender</p><p className="mt-1 text-sm font-medium text-slate-700">Seleção pensada para quem busca margem e praticidade</p></div>
           </div>
         </div>
 

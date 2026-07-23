@@ -6,7 +6,6 @@ interface HeaderProps { cartCount?: number; onCartClick?: () => void; }
 
 const NAVIGATION = [
   ["Cardapio", "#cardapio"],
-  ["Pagamento", "#pagamento"],
 ];
 
 export default function Header({ cartCount = 0, onCartClick }: HeaderProps) {
