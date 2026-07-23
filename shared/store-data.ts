@@ -19,6 +19,11 @@ export interface StoreProduct {
   badge?: string;
   badgeVariant?: ProductBadgeVariant;
   initialStock: number;
+  supplierId?: string | null;
+  supplierName?: string | null;
+  promoActive?: boolean;
+  promoLabel?: string | null;
+  promoPrice?: number | null;
 }
 
 export interface CartItem {

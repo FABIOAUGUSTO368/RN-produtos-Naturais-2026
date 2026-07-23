@@ -29,9 +29,30 @@ export interface CheckoutPayload {
 }
 
 export interface ProductRecord extends StoreProduct {
+  basePriceCents: number;
   priceCents: number;
   stockQuantity: number;
   lowStock: boolean;
+  active: boolean;
+  supplierId: string | null;
+  supplierName: string | null;
+  promoActive: boolean;
+  promoLabel: string | null;
+  promoPriceCents: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SupplierRecord {
+  id: string;
+  name: string;
+  contact: string;
+  email: string | null;
+  city: string | null;
+  notes: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface OrderItemRecord {
@@ -85,10 +106,23 @@ export interface AdminOverview {
   revenueCents: number;
   lowStockCount: number;
   activeProducts: number;
+  suppliersCount: number;
+  promotionsCount: number;
 }
 
 export interface StockRow extends ProductRecord {
   minThreshold: number;
+}
+
+export interface StockMovementRecord {
+  id: string;
+  productId: string;
+  productName: string;
+  orderId: string | null;
+  type: "in" | "out" | "adjustment";
+  quantity: number;
+  reason: string | null;
+  createdAt: string;
 }
 
 const DB_FILE = path.resolve(process.cwd(), "data", "rn-casa-do-norte.sqlite");
@@ -164,10 +198,14 @@ function createSchema(db: any) {
       category_id TEXT NOT NULL,
       category TEXT NOT NULL,
       price_cents INTEGER NOT NULL,
+      supplier_id TEXT,
       unit TEXT NOT NULL,
       image TEXT NOT NULL,
       badge TEXT,
       badge_variant TEXT,
+      promo_label TEXT,
+      promo_active INTEGER NOT NULL DEFAULT 0,
+      promo_price_cents INTEGER,
       initial_stock INTEGER NOT NULL,
       active INTEGER NOT NULL DEFAULT 1,
       created_at TEXT NOT NULL,
@@ -229,15 +267,45 @@ function createSchema(db: any) {
       created_at TEXT NOT NULL,
       FOREIGN KEY(product_id) REFERENCES products(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS suppliers (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      contact TEXT NOT NULL,
+      email TEXT,
+      city TEXT,
+      notes TEXT,
+      active INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
   `);
+}
+
+function tableHasColumn(db: any, tableName: string, columnName: string) {
+  const columns = all(db, `PRAGMA table_info(${tableName})`);
+  return columns.some((column) => String(column.name) === columnName);
+}
+
+function ensureColumn(db: any, tableName: string, columnName: string, definition: string) {
+  if (!tableHasColumn(db, tableName, columnName)) {
+    db.exec(`ALTER TABLE ${tableName} ADD COLUMN ${definition}`);
+  }
+}
+
+function migrateSchema(db: any) {
+  ensureColumn(db, "products", "supplier_id", "supplier_id TEXT");
+  ensureColumn(db, "products", "promo_label", "promo_label TEXT");
+  ensureColumn(db, "products", "promo_active", "promo_active INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(db, "products", "promo_price_cents", "promo_price_cents INTEGER");
 }
 
 function seedCatalog(db: any) {
   const createdAt = nowIso();
   const insertProduct = db.prepare(`
     INSERT OR IGNORE INTO products (
-      id, name, description, category_id, category, price_cents, unit, image, badge, badge_variant, initial_stock, active, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
+      id, name, description, category_id, category, price_cents, supplier_id, unit, image, badge, badge_variant, promo_label, promo_active, promo_price_cents, initial_stock, active, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)
   `);
   const insertInventory = db.prepare(`
     INSERT OR IGNORE INTO inventory (product_id, quantity, min_threshold, updated_at)
@@ -252,10 +320,14 @@ function seedCatalog(db: any) {
       product.categoryId,
       product.category,
       reaisToCents(product.price),
+      null,
       product.unit,
       product.image,
       product.badge ?? null,
       product.badgeVariant ?? null,
+      null,
+      0,
+      null,
       product.initialStock,
       createdAt,
       createdAt,
@@ -279,6 +351,7 @@ async function initializeDb() {
   }
 
   createSchema(db);
+  migrateSchema(db);
   seedCatalog(db);
   await persist(db);
   dbInstance = db;
@@ -309,14 +382,21 @@ async function getDb() {
 }
 
 function mapProduct(row: Record<string, unknown>): ProductRecord {
+  const basePriceCents = Number(row.price_cents);
+  const promoActive = Number(row.promo_active ?? 0) === 1;
+  const promoPriceCentsRaw = row.promo_price_cents == null ? null : Number(row.promo_price_cents);
+  const promoPriceCents = promoPriceCentsRaw && promoPriceCentsRaw > 0 ? promoPriceCentsRaw : null;
+  const effectivePriceCents = promoActive && promoPriceCents ? promoPriceCents : basePriceCents;
+
   return {
     id: String(row.id),
     name: String(row.name),
     description: String(row.description),
     categoryId: String(row.category_id) as ProductRecord["categoryId"],
     category: String(row.category),
-    price: centsToReais(Number(row.price_cents)),
-    priceCents: Number(row.price_cents),
+    price: centsToReais(effectivePriceCents),
+    basePriceCents,
+    priceCents: effectivePriceCents,
     unit: String(row.unit),
     image: String(row.image),
     badge: row.badge ? String(row.badge) : undefined,
@@ -324,6 +404,14 @@ function mapProduct(row: Record<string, unknown>): ProductRecord {
     initialStock: Number(row.initial_stock),
     stockQuantity: Number(row.quantity),
     lowStock: Number(row.quantity) <= Number(row.min_threshold),
+    active: Number(row.active ?? 1) === 1,
+    supplierId: row.supplier_id ? String(row.supplier_id) : null,
+    supplierName: row.supplier_name ? String(row.supplier_name) : null,
+    promoActive,
+    promoLabel: row.promo_label ? String(row.promo_label) : null,
+    promoPriceCents,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
   };
 }
 
@@ -390,18 +478,21 @@ function buildOrderNumber() {
   return `RN-${Date.now().toString().slice(-8)}`;
 }
 
-async function getProductsWithRows(db?: any) {
+async function getProductsWithRows(db?: any, includeInactive = false) {
   const database = db ?? (await getDb());
+  const activeFilter = includeInactive ? "" : "WHERE p.active = 1";
   return all(
     database,
     `
       SELECT
         p.*,
+        s.name as supplier_name,
         i.quantity,
         i.min_threshold
       FROM products p
+      LEFT JOIN suppliers s ON s.id = p.supplier_id
       LEFT JOIN inventory i ON i.product_id = p.id
-      WHERE p.active = 1
+      ${activeFilter}
       ORDER BY p.category, p.name
     `
   ).map(mapProduct);
@@ -414,9 +505,11 @@ async function getProductById(productId: string, db?: any) {
     `
       SELECT
         p.*,
+        s.name as supplier_name,
         i.quantity,
         i.min_threshold
       FROM products p
+      LEFT JOIN suppliers s ON s.id = p.supplier_id
       LEFT JOIN inventory i ON i.product_id = p.id
       WHERE p.id = ?
       LIMIT 1
@@ -526,7 +619,11 @@ async function adjustInventory(db: any, productId: string, delta: number, reason
 }
 
 export async function listProducts() {
-  return getProductsWithRows(await getDb());
+  return getProductsWithRows(await getDb(), false);
+}
+
+export async function listAllProducts() {
+  return getProductsWithRows(await getDb(), true);
 }
 
 export async function listStock() {
@@ -536,9 +633,11 @@ export async function listStock() {
     `
       SELECT
         p.*,
+        s.name as supplier_name,
         i.quantity,
         i.min_threshold
       FROM products p
+      LEFT JOIN suppliers s ON s.id = p.supplier_id
       JOIN inventory i ON i.product_id = p.id
       WHERE p.active = 1
       ORDER BY p.category, p.name
@@ -570,6 +669,10 @@ export async function getOverview(): Promise<AdminOverview> {
     )?.count ?? 0
   );
   const activeProducts = Number(get(db, `SELECT COUNT(*) as count FROM products WHERE active = 1`)?.count ?? 0);
+  const suppliersCount = Number(get(db, `SELECT COUNT(*) as count FROM suppliers WHERE active = 1`)?.count ?? 0);
+  const promotionsCount = Number(
+    get(db, `SELECT COUNT(*) as count FROM products WHERE promo_active = 1 AND promo_price_cents IS NOT NULL`)?.count ?? 0
+  );
 
   return {
     totalOrders,
@@ -577,6 +680,8 @@ export async function getOverview(): Promise<AdminOverview> {
     revenueCents: Number(revenueRow?.total ?? 0),
     lowStockCount,
     activeProducts,
+    suppliersCount,
+    promotionsCount,
   };
 }
 
@@ -612,6 +717,240 @@ export async function listOrders() {
   });
 }
 
+export async function listSuppliers() {
+  const db = await getDb();
+  return all(
+    db,
+    `
+      SELECT *
+      FROM suppliers
+      ORDER BY name
+    `
+  ).map((row) => ({
+    id: String(row.id),
+    name: String(row.name),
+    contact: String(row.contact),
+    email: row.email ? String(row.email) : null,
+    city: row.city ? String(row.city) : null,
+    notes: row.notes ? String(row.notes) : null,
+    active: Number(row.active ?? 1) === 1,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  })) as SupplierRecord[];
+}
+
+export async function createSupplier(input: {
+  name: string;
+  contact: string;
+  email?: string | null;
+  city?: string | null;
+  notes?: string | null;
+  active?: boolean;
+}) {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  const createdAt = nowIso();
+
+  run(
+    db,
+    `
+      INSERT INTO suppliers (
+        id, name, contact, email, city, notes, active, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    [
+      id,
+      input.name,
+      input.contact,
+      input.email ?? null,
+      input.city ?? null,
+      input.notes ?? null,
+      input.active === false ? 0 : 1,
+      createdAt,
+      createdAt,
+    ]
+  );
+
+  await persist(db);
+  return listSuppliers();
+}
+
+export async function updateSupplier(
+  supplierId: string,
+  input: Partial<{
+    name: string;
+    contact: string;
+    email: string | null;
+    city: string | null;
+    notes: string | null;
+    active: boolean;
+  }>
+) {
+  const db = await getDb();
+  const current = get(db, `SELECT * FROM suppliers WHERE id = ? LIMIT 1`, [supplierId]);
+  if (!current) {
+    throw new Error("Fornecedor não encontrado.");
+  }
+
+  run(
+    db,
+    `
+      UPDATE suppliers
+      SET name = ?, contact = ?, email = ?, city = ?, notes = ?, active = ?, updated_at = ?
+      WHERE id = ?
+    `,
+    [
+      input.name ?? String(current.name),
+      input.contact ?? String(current.contact),
+      input.email ?? (current.email ? String(current.email) : null),
+      input.city ?? (current.city ? String(current.city) : null),
+      input.notes ?? (current.notes ? String(current.notes) : null),
+      input.active === undefined ? Number(current.active ?? 1) : input.active ? 1 : 0,
+      nowIso(),
+      supplierId,
+    ]
+  );
+
+  await persist(db);
+  return listSuppliers();
+}
+
+export async function createProduct(input: {
+  name: string;
+  description: string;
+  categoryId: string;
+  category: string;
+  price: number;
+  unit: string;
+  image: string;
+  badge?: string | null;
+  badgeVariant?: string | null;
+  initialStock: number;
+  active?: boolean;
+  supplierId?: string | null;
+  promoLabel?: string | null;
+  promoActive?: boolean;
+  promoPrice?: number | null;
+}) {
+  const db = await getDb();
+  const id = crypto.randomUUID();
+  const createdAt = nowIso();
+
+  run(
+    db,
+    `
+      INSERT INTO products (
+        id, name, description, category_id, category, price_cents, supplier_id, unit, image, badge, badge_variant,
+        promo_label, promo_active, promo_price_cents, initial_stock, active, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+    [
+      id,
+      input.name,
+      input.description,
+      input.categoryId,
+      input.category,
+      reaisToCents(input.price),
+      input.supplierId ?? null,
+      input.unit,
+      input.image,
+      input.badge ?? null,
+      input.badgeVariant ?? null,
+      input.promoLabel ?? null,
+      input.promoActive ? 1 : 0,
+      input.promoPrice != null ? reaisToCents(input.promoPrice) : null,
+      input.initialStock,
+      input.active === false ? 0 : 1,
+      createdAt,
+      createdAt,
+    ]
+  );
+
+  run(
+    db,
+    `INSERT INTO inventory (product_id, quantity, min_threshold, updated_at) VALUES (?, ?, ?, ?)`,
+    [id, input.initialStock, 5000, createdAt]
+  );
+
+  await persist(db);
+  return getProductById(id, db);
+}
+
+export async function updateProduct(
+  productId: string,
+  input: Partial<{
+    name: string;
+    description: string;
+    categoryId: string;
+    category: string;
+    price: number;
+    unit: string;
+    image: string;
+    badge: string | null;
+    badgeVariant: string | null;
+    active: boolean;
+    supplierId: string | null;
+    promoLabel: string | null;
+    promoActive: boolean;
+    promoPrice: number | null;
+  }>
+) {
+  const db = await getDb();
+  const current = get(db, `SELECT * FROM products WHERE id = ? LIMIT 1`, [productId]);
+  if (!current) {
+    throw new Error("Produto não encontrado.");
+  }
+
+  run(
+    db,
+    `
+      UPDATE products
+      SET
+        name = ?,
+        description = ?,
+        category_id = ?,
+        category = ?,
+        price_cents = ?,
+        supplier_id = ?,
+        unit = ?,
+        image = ?,
+        badge = ?,
+        badge_variant = ?,
+        promo_label = ?,
+        promo_active = ?,
+        promo_price_cents = ?,
+        active = ?,
+        updated_at = ?
+      WHERE id = ?
+    `,
+    [
+      input.name ?? String(current.name),
+      input.description ?? String(current.description),
+      input.categoryId ?? String(current.category_id),
+      input.category ?? String(current.category),
+      input.price != null ? reaisToCents(input.price) : Number(current.price_cents),
+      input.supplierId === undefined ? (current.supplier_id ? String(current.supplier_id) : null) : input.supplierId,
+      input.unit ?? String(current.unit),
+      input.image ?? String(current.image),
+      input.badge === undefined ? (current.badge ? String(current.badge) : null) : input.badge,
+      input.badgeVariant === undefined ? (current.badge_variant ? String(current.badge_variant) : null) : input.badgeVariant,
+      input.promoLabel === undefined ? (current.promo_label ? String(current.promo_label) : null) : input.promoLabel,
+      input.promoActive === undefined ? Number(current.promo_active ?? 0) : input.promoActive ? 1 : 0,
+      input.promoPrice === undefined
+        ? current.promo_price_cents ?? null
+        : input.promoPrice == null
+          ? null
+          : reaisToCents(input.promoPrice),
+      input.active === undefined ? Number(current.active ?? 1) : input.active ? 1 : 0,
+      nowIso(),
+      productId,
+    ]
+  );
+
+  await persist(db);
+  return getProductById(productId, db);
+}
+
 export async function setInventoryQuantity(
   productId: string,
   quantity: number,
@@ -636,6 +975,32 @@ export async function setInventoryQuantity(
   });
   await persist(db);
   return getProductById(productId, db);
+}
+
+export async function listStockMovements(limit = 40) {
+  const db = await getDb();
+  return all(
+    db,
+    `
+      SELECT
+        m.*,
+        p.name as product_name
+      FROM stock_movements m
+      JOIN products p ON p.id = m.product_id
+      ORDER BY m.created_at DESC
+      LIMIT ?
+    `,
+    [limit]
+  ).map((row) => ({
+    id: String(row.id),
+    productId: String(row.product_id),
+    productName: String(row.product_name),
+    orderId: row.order_id ? String(row.order_id) : null,
+    type: String(row.type) as StockMovementRecord["type"],
+    quantity: Number(row.quantity),
+    reason: row.reason ? String(row.reason) : null,
+    createdAt: String(row.created_at),
+  })) as StockMovementRecord[];
 }
 
 async function reserveStock(db: any, items: CartItem[], orderId: string, paymentMethod: PaymentMethod) {
@@ -841,8 +1206,15 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
 }
 
 export async function listDashboard() {
-  const [overview, stock, orders] = await Promise.all([getOverview(), listStock(), listOrders()]);
-  return { overview, stock, orders };
+  const [overview, stock, orders, products, suppliers, movements] = await Promise.all([
+    getOverview(),
+    listStock(),
+    listOrders(),
+    listAllProducts(),
+    listSuppliers(),
+    listStockMovements(),
+  ]);
+  return { overview, stock, orders, products, suppliers, movements };
 }
 
 export async function getPublicOrder(orderId: string) {

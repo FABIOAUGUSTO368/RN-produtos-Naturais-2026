@@ -2,15 +2,21 @@ import { z } from "zod";
 import {
   attachPaymentPreference,
   attachPaymentData,
+  createProduct,
+  createSupplier,
   createOrder,
   getOverview,
   getOrderById,
   getOrderByExternalReference,
+  listAllProducts,
   listOrders,
-  listProducts,
   listStock,
+  listStockMovements,
+  listSuppliers,
   listDashboard,
   setInventoryQuantity,
+  updateProduct,
+  updateSupplier,
   updateOrderAfterPayment,
   updateOrderStatus,
   type CheckoutPayload,
@@ -52,6 +58,33 @@ const checkoutSchema = z.object({
 const stockUpdateSchema = z.object({
   quantity: z.number().int().nonnegative(),
   reason: z.string().optional(),
+});
+
+const productInputSchema = z.object({
+  name: z.string().min(2),
+  description: z.string().min(10),
+  categoryId: z.string().min(1),
+  category: z.string().min(2),
+  price: z.number().positive(),
+  unit: z.string().min(1),
+  image: z.string().min(1),
+  badge: z.string().optional().nullable(),
+  badgeVariant: z.string().optional().nullable(),
+  initialStock: z.number().int().nonnegative(),
+  active: z.boolean().optional(),
+  supplierId: z.string().optional().nullable(),
+  promoLabel: z.string().optional().nullable(),
+  promoActive: z.boolean().optional(),
+  promoPrice: z.number().positive().optional().nullable(),
+});
+
+const supplierInputSchema = z.object({
+  name: z.string().min(2),
+  contact: z.string().min(3),
+  email: z.string().email().optional().nullable(),
+  city: z.string().min(2).optional().nullable(),
+  notes: z.string().optional().nullable(),
+  active: z.boolean().optional(),
 });
 
 const orderStatusSchema = z.object({
@@ -217,6 +250,22 @@ export async function handleApiRequest(request: ApiRequestLike) {
       return jsonResponse(200, await listDashboard());
     }
 
+    if (method === "GET" && pathname === "/api/admin/catalog") {
+      if (!isAdminAuthorized(headers)) {
+        return jsonResponse(401, { error: "Não autorizado." });
+      }
+
+      const [products, suppliers, stock, overview, movements] = await Promise.all([
+        listAllProducts(),
+        listSuppliers(),
+        listStock(),
+        getOverview(),
+        listStockMovements(),
+      ]);
+
+      return jsonResponse(200, { products, suppliers, stock, overview, movements });
+    }
+
     if (method === "PATCH" && pathname.match(/^\/api\/admin\/stock\/[^/]+$/)) {
       if (!isAdminAuthorized(headers)) {
         return jsonResponse(401, { error: "Não autorizado." });
@@ -226,6 +275,56 @@ export async function handleApiRequest(request: ApiRequestLike) {
       const payload = stockUpdateSchema.parse(parseJsonBody(request.body));
       const updated = await setInventoryQuantity(productId, payload.quantity, payload.reason);
       return jsonResponse(200, { product: updated });
+    }
+
+    if (method === "POST" && pathname === "/api/admin/products") {
+      if (!isAdminAuthorized(headers)) {
+        return jsonResponse(401, { error: "Não autorizado." });
+      }
+
+      const payload = productInputSchema.parse(parseJsonBody(request.body));
+      const product = await createProduct(payload);
+      return jsonResponse(201, { product });
+    }
+
+    if (method === "PATCH" && pathname.match(/^\/api\/admin\/products\/[^/]+$/)) {
+      if (!isAdminAuthorized(headers)) {
+        return jsonResponse(401, { error: "Não autorizado." });
+      }
+
+      const productId = pathname.split("/").pop() ?? "";
+      const payload = productInputSchema.partial().parse(parseJsonBody(request.body));
+      const product = await updateProduct(productId, payload);
+      return jsonResponse(200, { product });
+    }
+
+    if (method === "GET" && pathname === "/api/admin/suppliers") {
+      if (!isAdminAuthorized(headers)) {
+        return jsonResponse(401, { error: "Não autorizado." });
+      }
+
+      return jsonResponse(200, { suppliers: await listSuppliers() });
+    }
+
+    if (method === "POST" && pathname === "/api/admin/suppliers") {
+      if (!isAdminAuthorized(headers)) {
+        return jsonResponse(401, { error: "Não autorizado." });
+      }
+
+      const payload = supplierInputSchema.parse(parseJsonBody(request.body));
+      const suppliers = await createSupplier(payload);
+      return jsonResponse(201, { suppliers });
+    }
+
+    if (method === "PATCH" && pathname.match(/^\/api\/admin\/suppliers\/[^/]+$/)) {
+      if (!isAdminAuthorized(headers)) {
+        return jsonResponse(401, { error: "Não autorizado." });
+      }
+
+      const supplierId = pathname.split("/").pop() ?? "";
+      const payload = supplierInputSchema.partial().parse(parseJsonBody(request.body));
+      const suppliers = await updateSupplier(supplierId, payload);
+      return jsonResponse(200, { suppliers });
     }
 
     if (method === "PATCH" && pathname.match(/^\/api\/admin\/orders\/[^/]+\/status$/)) {

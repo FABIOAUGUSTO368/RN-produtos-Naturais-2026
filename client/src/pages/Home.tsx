@@ -31,8 +31,37 @@ function loadCart(): CartItem[] {
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [products, setProducts] = useState<StoreProduct[]>(PRODUCTS);
   const [cart, setCart] = useState<CartItem[]>(() => loadCart());
   const [isCartOpen, setIsCartOpen] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadProducts() {
+      try {
+        const response = await fetch("/api/products");
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as { products?: StoreProduct[] };
+        if (!cancelled && Array.isArray(payload.products) && payload.products.length > 0) {
+          setProducts(payload.products);
+        }
+      } catch {
+        if (!cancelled) {
+          setProducts(PRODUCTS);
+        }
+      }
+    }
+
+    void loadProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     window.localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
@@ -50,8 +79,8 @@ export default function Home() {
 
   const filteredProducts =
     selectedCategory === "all"
-      ? PRODUCTS
-      : PRODUCTS.filter((product) => product.categoryId === selectedCategory);
+      ? products
+      : products.filter((product) => product.categoryId === selectedCategory);
 
   const addToCart = (product: StoreProduct, weight: number) => {
     const cartItem = toCartItem(product, weight);
