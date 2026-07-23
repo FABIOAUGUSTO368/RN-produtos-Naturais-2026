@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-export type OrderPaymentMethod = "pix" | "card" | "boleto";
+export type OrderPaymentMethod = "pix" | "card";
 
 export interface OrderItemInput {
   productId: string;

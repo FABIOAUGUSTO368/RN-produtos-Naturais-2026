@@ -206,7 +206,7 @@ export default function CartSheet({
           <SheetHeader>
             <SheetTitle>Seu carrinho</SheetTitle>
             <SheetDescription>
-              {itemCount} item(ns) pronto(s) para checkout com PIX, cartão ou boleto.
+              {itemCount} item(ns) pronto(s) para checkout com PIX ou cartão.
             </SheetDescription>
           </SheetHeader>
 
@@ -271,6 +271,7 @@ export default function CartSheet({
             <Separator />
 
             <form
+              id="checkout-form"
               className="space-y-4"
               onSubmit={(event) => {
                 event.preventDefault();
@@ -281,7 +282,7 @@ export default function CartSheet({
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="name">Nome</Label>
-                    <Input id="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+                    <Input id="name" minLength={2} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">E-mail</Label>
@@ -292,17 +293,17 @@ export default function CartSheet({
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-2">
                     <Label htmlFor="phone">Telefone</Label>
-                    <Input id="phone" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
+                    <Input id="phone" minLength={8} value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="zip">CEP</Label>
-                    <Input id="zip" value={form.zip} onChange={(e) => setForm({ ...form, zip: e.target.value })} required />
+                    <Input id="zip" minLength={5} value={form.zip} onChange={(e) => setForm({ ...form, zip: e.target.value })} required />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="street">Endereço</Label>
-                  <Input id="street" value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} required />
+                  <Input id="street" minLength={3} value={form.street} onChange={(e) => setForm({ ...form, street: e.target.value })} required />
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
@@ -312,7 +313,7 @@ export default function CartSheet({
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="neighborhood">Bairro</Label>
-                    <Input id="neighborhood" value={form.neighborhood} onChange={(e) => setForm({ ...form, neighborhood: e.target.value })} required />
+                    <Input id="neighborhood" minLength={2} value={form.neighborhood} onChange={(e) => setForm({ ...form, neighborhood: e.target.value })} required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="state">Estado</Label>
@@ -322,7 +323,7 @@ export default function CartSheet({
 
                 <div className="space-y-2">
                   <Label htmlFor="city">Cidade</Label>
-                  <Input id="city" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
+                  <Input id="city" minLength={2} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} required />
                 </div>
 
                 <div className="space-y-2">
@@ -334,7 +335,6 @@ export default function CartSheet({
                     <SelectContent>
                       <SelectItem value="pix">PIX</SelectItem>
                       <SelectItem value="card">Cartão</SelectItem>
-                      <SelectItem value="boleto">Boleto</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -375,8 +375,8 @@ export default function CartSheet({
           <SheetFooter className="border-t border-border">
             <div className="flex w-full flex-col gap-3">
               <Button
-                type="button"
-                onClick={() => void submitCheckout()}
+                type="submit"
+                form="checkout-form"
                 disabled={isSubmitting || items.length === 0}
                 className="w-full"
               >

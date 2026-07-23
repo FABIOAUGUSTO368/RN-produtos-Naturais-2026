@@ -33,7 +33,7 @@ const checkoutSchema = z.object({
     state: z.string().min(2),
     complement: z.string().optional(),
   }),
-  paymentMethod: z.enum(["pix", "card", "boleto"]),
+  paymentMethod: z.enum(["pix", "card"]),
   notes: z.string().optional(),
   items: z.array(
     z.object({

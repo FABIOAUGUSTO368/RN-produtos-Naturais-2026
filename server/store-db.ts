@@ -3,7 +3,7 @@ import path from "node:path";
 import initSqlJs from "sql.js";
 import { PRODUCTS, findProductById, type CartItem, type StoreProduct } from "../shared/store-data.ts";
 
-export type PaymentMethod = "pix" | "card" | "boleto";
+export type PaymentMethod = "pix" | "card";
 export type OrderStatus = "pending_payment" | "paid" | "preparing" | "shipped" | "delivered" | "cancelled";
 export type PaymentStatus = "pending" | "confirmed" | "failed";
 export type ReservationStatus = "reserved" | "consumed" | "released";

@@ -27,8 +27,8 @@ function buildBotReply(message: string) {
     return "Temos carnes secas, cuscuz, farinhas, temperos, laticínios e sabores regionais. Se quiser, eu também posso te indicar os mais vendidos para venda rápida ou consumo em casa.";
   }
 
-  if (/(pagamento|pix|cart[aã]o|boleto|parcela|checkout)/i.test(text)) {
-    return "Você pode finalizar por PIX, cartão ou boleto. No PIX, o site gera o QR Code e o código copia e cola na hora. Se quiser, eu posso te explicar o passo a passo.";
+  if (/(pagamento|pix|cart[aã]o|parcela|checkout)/i.test(text)) {
+    return "Você pode finalizar por PIX ou cartão. No PIX, o site gera o QR Code e o código copia e cola na hora. Se quiser, eu posso te explicar o passo a passo.";
   }
 
   if (/(entrega|frete|prazo|envio|receber|delivery)/i.test(text)) {
