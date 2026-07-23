@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bot, ChevronDown, ChevronUp, MessageCircleMore, Send, Sparkles, Store, UserCircle2 } from "lucide-react";
+import {
+  Bot,
+  ChevronDown,
+  ChevronUp,
+  MessageCircleMore,
+  Send,
+  Sparkles,
+  Store,
+  UserCircle2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { openWhatsApp, createSupportMessage } from "@/lib/whatsapp";
@@ -15,35 +24,51 @@ interface ChatMessage {
 
 const QUICK_ACTIONS = [
   "Quais produtos vocês vendem?",
+  "Tem carne de sol?",
   "Como funciona o pagamento?",
   "Qual o prazo de entrega?",
-  "Quero falar com o Fabio",
 ];
 
 function buildBotReply(message: string) {
   const text = message.toLowerCase();
 
-  if (/(produto|cardap[íi]o|carnes?|cuscuz|farinha|tempero|latic[ií]nio|massa|regional)/i.test(text)) {
-    return "Temos carnes secas, cuscuz, farinhas, temperos, laticínios e sabores regionais. Se quiser, eu também posso te indicar os mais vendidos para venda rápida ou consumo em casa.";
+  if (/(produto|cardapio|carnes?|carne de sol|cuscuz|farinha|tempero|latic[ii]nio|massa|regional|queijo|bai[aã]o|manteiga)/i.test(text)) {
+    return [
+      "A Casa do Norte Raizes do Nordeste trabalha com carnes secas, carne de sol, cuscuz, farinhas, queijo coalho, baião de dois e outros sabores regionais.",
+      "Se quiser, eu posso te indicar os itens mais pedidos ou montar uma sugestão para consumo e revenda.",
+    ].join(" ");
   }
 
-  if (/(pagamento|pix|cart[aã]o|parcela|checkout)/i.test(text)) {
-    return "Você pode finalizar por PIX ou cartão. No PIX, o site gera o QR Code e o código copia e cola na hora. Se quiser, eu posso te explicar o passo a passo.";
+  if (/(pagamento|pix|cart[aã]o|checkout|parcel|compra)/i.test(text)) {
+    return [
+      "Você pode finalizar seu pedido por PIX ou cartão.",
+      "No PIX, o sistema gera o QR Code e o copia e cola para facilitar o pagamento.",
+      "No cartão, o checkout segue de forma segura dentro do site.",
+    ].join(" ");
   }
 
-  if (/(entrega|frete|prazo|envio|receber|delivery)/i.test(text)) {
-    return "Fazemos a finalização do pedido aqui no site e o acompanhamento segue no atendimento. Se você me disser o bairro ou cidade, eu te oriento melhor sobre a entrega.";
+  if (/(entrega|frete|prazo|envio|receber|delivery|bairro|cidade)/i.test(text)) {
+    return [
+      "A entrega varia conforme a cidade e o bairro.",
+      "Se você me disser onde está, eu consigo te orientar melhor sobre o prazo e o frete antes de finalizar o pedido.",
+    ].join(" ");
   }
 
   if (/(pedido|status|acompanhamento|rastreamento|andamento)/i.test(text)) {
-    return "Depois que o pedido é criado, ele fica registrado para acompanhamento. Se preferir, eu também posso te encaminhar para o WhatsApp para falar com alguém da loja.";
+    return [
+      "Depois que o pedido é finalizado, ele fica registrado para acompanhamento.",
+      "Se quiser, eu também posso te passar para o WhatsApp da loja para falar com a equipe e verificar o andamento.",
+    ].join(" ");
   }
 
-  if (/(fabio|humano|atendente|vendedor|pessoa)/i.test(text)) {
-    return "Claro. Eu posso te encaminhar para o Fabio agora mesmo no WhatsApp para um atendimento mais direto.";
+  if (/(fabio|humano|atendente|vendedor|pessoa|loja|whatsapp)/i.test(text)) {
+    return "Claro. Posso te encaminhar agora para o WhatsApp da loja e você fala direto com o Fabio ou com a equipe.";
   }
 
-  return "Entendi. Pode me mandar um pouco mais de detalhe para eu te ajudar melhor? Se preferir, também posso te encaminhar para o WhatsApp da loja.";
+  return [
+    "Entendi. Me conta um pouco mais para eu te ajudar melhor.",
+    "Se preferir, eu também posso te encaminhar para o WhatsApp da loja agora mesmo.",
+  ].join(" ");
 }
 
 export default function StoreAssistantChat() {
@@ -61,7 +86,8 @@ export default function StoreAssistantChat() {
       {
         id: "greeting",
         role: "bot",
-        text: "Olá, aqui é o Fabio. Em que posso ajudar você hoje na Casa do Norte?",
+        text:
+          "Olá, aqui é o Fabio. Fique à vontade para me chamar sobre produtos, entrega ou pagamento. Se quiser, eu posso te indicar os itens mais pedidos da loja.",
       },
     ]);
   }, [isOpen, messages.length]);
@@ -109,11 +135,6 @@ export default function StoreAssistantChat() {
   };
 
   const handleQuickAction = (label: string) => {
-    if (label === "Quero falar com o Fabio") {
-      openWhatsApp(createSupportMessage("Quero falar com o Fabio sobre atendimento na loja."));
-      return;
-    }
-
     handleSend(label);
   };
 
@@ -132,7 +153,9 @@ export default function StoreAssistantChat() {
                   <Bot className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-100">Atendimento da loja</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-100">
+                    Atendimento da loja
+                  </p>
                   <p className="font-serif text-lg font-bold">Fabio responde por aqui</p>
                 </div>
               </div>
@@ -154,10 +177,7 @@ export default function StoreAssistantChat() {
             {messages.map((message) => (
               <div
                 key={message.id}
-                className={cn(
-                  "flex items-end gap-2",
-                  message.role === "user" ? "justify-end" : "justify-start"
-                )}
+                className={cn("flex items-end gap-2", message.role === "user" ? "justify-end" : "justify-start")}
               >
                 {message.role === "bot" ? (
                   <div className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-100 text-emerald-700">
