@@ -955,7 +955,8 @@ export async function setInventoryQuantity(
   productId: string,
   quantity: number,
   reason = "Ajuste manual",
-  adminOrderId?: string
+  adminOrderId?: string,
+  movementType: "in" | "out" | "adjustment" = "adjustment"
 ) {
   const db = await getDb();
   const current = get(db, `SELECT quantity FROM inventory WHERE product_id = ? LIMIT 1`, [productId]);
@@ -965,11 +966,12 @@ export async function setInventoryQuantity(
 
   const delta = quantity - Number(current.quantity);
   run(db, `UPDATE inventory SET quantity = ?, updated_at = ? WHERE product_id = ?`, [quantity, nowIso(), productId]);
+  const loggedType = movementType === "adjustment" ? "adjustment" : movementType;
   await syncStockMovement(db, {
     id: crypto.randomUUID(),
     productId,
     orderId: adminOrderId ?? null,
-    type: "adjustment",
+    type: loggedType,
     quantity: Math.abs(delta),
     reason,
   });

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Banknote,
@@ -154,6 +154,14 @@ interface SupplierDraft {
   active: boolean;
 }
 
+type StockMovementMode = "adjustment" | "in" | "out";
+
+interface StockDraft {
+  quantity: string;
+  movementType: StockMovementMode;
+  reason: string;
+}
+
 const STORAGE_KEY = "rn-admin-token";
 const ORDER_STATUSES: OrderStatus[] = ["pending_payment", "paid", "preparing", "shipped", "delivered", "cancelled"];
 const CATEGORY_OPTIONS = [
@@ -294,7 +302,7 @@ export default function Admin() {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [stockDrafts, setStockDrafts] = useState<Record<string, string>>({});
+  const [stockDrafts, setStockDrafts] = useState<Record<string, StockDraft>>({});
   const [statusDrafts, setStatusDrafts] = useState<Record<string, OrderStatus>>({});
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [productDraft, setProductDraft] = useState<ProductDraft>(createEmptyProductDraft());
@@ -308,6 +316,15 @@ export default function Admin() {
   const orders = dashboard?.orders ?? [];
   const suppliers = dashboard?.suppliers ?? [];
   const movements = dashboard?.movements ?? [];
+  const latestMovementByProduct = useMemo(() => {
+    const result = new Map<string, StockMovement>();
+    for (const movement of movements) {
+      if (!result.has(movement.productId)) {
+        result.set(movement.productId, movement);
+      }
+    }
+    return result;
+  }, [movements]);
   const lowStockProducts = stock
     .filter((item) => item.lowStock || item.stockQuantity <= (item.minThreshold ?? 10))
     .slice(0, 3);
@@ -355,7 +372,14 @@ export default function Admin() {
     try {
       const response = (await apiFetch("/api/admin/catalog")) as DashboardResponse;
       setDashboard(response);
-      setStockDrafts(Object.fromEntries(response.stock.map((item) => [item.id, String(item.stockQuantity)])));
+      setStockDrafts(
+        Object.fromEntries(
+          response.stock.map((item) => [
+            item.id,
+            { quantity: String(item.stockQuantity), movementType: "adjustment", reason: "" },
+          ])
+        )
+      );
       setStatusDrafts(Object.fromEntries(response.orders.map((order) => [order.id, order.status])));
 
       if (!selectedProductId && response.products.length > 0) {
@@ -397,28 +421,66 @@ export default function Admin() {
     toast.success("Token salvo com sucesso.");
   }
 
-  async function updateStock(productId: string) {
-    const nextQuantity = Number(stockDrafts[productId]);
-    if (Number.isNaN(nextQuantity) || nextQuantity < 0) {
+  async function updateStock(product: AdminProduct) {
+    const draft = stockDrafts[product.id] ?? {
+      quantity: String(product.stockQuantity),
+      movementType: "adjustment" as StockMovementMode,
+      reason: "",
+    };
+    const quantityValue = Number(draft.quantity);
+    if (Number.isNaN(quantityValue) || quantityValue < 0) {
       toast.error("Informe uma quantidade válida.");
       return;
     }
 
+    const movementType = draft.movementType;
+    const reason =
+      draft.reason.trim() ||
+      ({
+        adjustment: "Ajuste manual do admin",
+        in: "Entrada manual do admin",
+        out: "Saída manual do admin",
+      } as Record<StockMovementMode, string>)[movementType];
+
+    let nextQuantity = quantityValue;
+    if (movementType === "in") {
+      if (quantityValue <= 0) {
+        toast.error("Informe uma quantidade de entrada maior que zero.");
+        return;
+      }
+      nextQuantity = product.stockQuantity + quantityValue;
+    } else if (movementType === "out") {
+      if (quantityValue <= 0) {
+        toast.error("Informe uma quantidade de saída maior que zero.");
+        return;
+      }
+      if (quantityValue > product.stockQuantity) {
+        toast.error("Não é possível retirar mais do que há em estoque.");
+        return;
+      }
+      nextQuantity = product.stockQuantity - quantityValue;
+    }
+
     try {
-      const payload = (await apiFetch(`/api/admin/stock/${productId}`, {
+      const payload = (await apiFetch(`/api/admin/stock/${product.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ quantity: nextQuantity, reason: "Ajuste manual do admin" }),
+        body: JSON.stringify({ quantity: nextQuantity, reason, movementType }),
       })) as { product: AdminProduct };
 
       setDashboard((current) => {
         if (!current) return current;
         return {
           ...current,
-          stock: current.stock.map((item) => (item.id === productId ? { ...item, ...payload.product } : item)),
-          products: current.products.map((item) => (item.id === productId ? { ...item, ...payload.product } : item)),
+          stock: current.stock.map((item) => (item.id === product.id ? { ...item, ...payload.product } : item)),
+          products: current.products.map((item) => (item.id === product.id ? { ...item, ...payload.product } : item)),
         };
       });
+      setStockDrafts((current) => ({
+        ...current,
+        [product.id]: { quantity: String(payload.product.stockQuantity), movementType: "adjustment", reason: "" },
+      }));
       toast.success("Estoque atualizado.");
+      await refreshDashboard(token);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Falha ao atualizar estoque.");
     }
@@ -1215,13 +1277,36 @@ export default function Admin() {
             <Card className="border-border/70 shadow-sm">
               <CardHeader>
                 <CardTitle>Controle de estoque</CardTitle>
-                <CardDescription>Ajuste quantidades manualmente e mantenha os números alinhados com a operação.</CardDescription>
+                <CardDescription>Registre entrada, saída ou ajuste manual com motivo e acompanhe o histórico por produto.</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5">
+                <div className="grid gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 md:grid-cols-3">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-emerald-700">Entrada</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Inclua mercadoria nova no estoque físico.</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-emerald-700">Saída</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Baixe o saldo por venda, perda ou consumo interno.</p>
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-emerald-700">Ajuste</p>
+                    <p className="mt-1 text-sm text-muted-foreground">Corrija o saldo após inventário ou conferência.</p>
+                  </div>
+                </div>
                 {stock.length === 0 ? (
                   <p className="text-sm text-muted-foreground">Nenhum item de estoque carregado.</p>
                 ) : (
-                  stock.map((product) => (
+                  stock.map((product) => {
+                    const draft =
+                      stockDrafts[product.id] ?? {
+                        quantity: String(product.stockQuantity),
+                        movementType: "adjustment" as StockMovementMode,
+                        reason: "",
+                      };
+                    const latestMovement = latestMovementByProduct.get(product.id);
+
+                    return (
                     <div key={product.id} className="rounded-2xl border border-border bg-white p-4">
                       <div className="flex items-start gap-3">
                         <img src={product.image} alt={product.name} className="h-16 w-16 rounded-xl object-cover" />
@@ -1244,28 +1329,96 @@ export default function Admin() {
                         ) : null}
                       </div>
 
-                      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-                        <div className="grid flex-1 gap-2">
-                          <Label htmlFor={`stock-${product.id}`}>Quantidade</Label>
+                      <div className="mt-4 grid gap-4 lg:grid-cols-[180px_1fr_1.3fr]">
+                        <div className="grid gap-2">
+                          <Label htmlFor={`movement-${product.id}`}>Movimentação</Label>
+                          <Select
+                            value={draft.movementType}
+                            onValueChange={(value) =>
+                              setStockDrafts((current) => ({
+                                ...current,
+                                [product.id]: {
+                                  ...draft,
+                                  movementType: value as StockMovementMode,
+                                },
+                              }))
+                            }
+                          >
+                            <SelectTrigger id={`movement-${product.id}`}>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="in">Entrada</SelectItem>
+                              <SelectItem value="out">Saída</SelectItem>
+                              <SelectItem value="adjustment">Ajuste</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="grid gap-2">
+                          <Label htmlFor={`stock-${product.id}`}>
+                            {draft.movementType === "adjustment" ? "Saldo final" : "Quantidade movimentada"}
+                          </Label>
                           <Input
                             id={`stock-${product.id}`}
                             type="number"
                             min="0"
-                            value={stockDrafts[product.id] ?? String(product.stockQuantity)}
+                            value={draft.quantity}
                             onChange={(event) =>
                               setStockDrafts((current) => ({
                                 ...current,
-                                [product.id]: event.target.value,
+                                [product.id]: {
+                                  ...draft,
+                                  quantity: event.target.value,
+                                },
                               }))
                             }
+                            placeholder={draft.movementType === "adjustment" ? "Saldo total desejado" : "Quantidade"}
                           />
+                          <p className="text-xs text-muted-foreground">
+                            {draft.movementType === "adjustment"
+                              ? "Use quando quiser definir o saldo exato do produto."
+                              : "Use a quantidade que será adicionada ou retirada do estoque."}
+                          </p>
                         </div>
-                        <Button variant="outline" onClick={() => void updateStock(product.id)}>
-                          Salvar estoque
+
+                        <div className="grid gap-2">
+                          <Label htmlFor={`reason-${product.id}`}>Motivo / observação</Label>
+                          <Textarea
+                            id={`reason-${product.id}`}
+                            rows={3}
+                            value={draft.reason}
+                            onChange={(event) =>
+                              setStockDrafts((current) => ({
+                                ...current,
+                                [product.id]: {
+                                  ...draft,
+                                  reason: event.target.value,
+                                },
+                              }))
+                            }
+                            placeholder="Ex.: reposição do fornecedor, conferência, avaria ou inventário."
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            {latestMovement
+                              ? `Último movimento: ${movementLabel(latestMovement.type)} em ${new Date(latestMovement.createdAt).toLocaleDateString("pt-BR")}`
+                              : "Sem movimentação registrada ainda."}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-xs text-muted-foreground">
+                          Estoque atual: <span className="font-semibold text-foreground">{product.stockQuantity}</span> • Mínimo:{" "}
+                          <span className="font-semibold text-foreground">{product.minThreshold}</span>
+                        </p>
+                        <Button variant="outline" onClick={() => void updateStock(product)}>
+                          Registrar movimento
                         </Button>
                       </div>
                     </div>
-                  ))
+                    );
+                  })
                 )}
               </CardContent>
             </Card>

@@ -58,6 +58,7 @@ const checkoutSchema = z.object({
 const stockUpdateSchema = z.object({
   quantity: z.number().int().nonnegative(),
   reason: z.string().optional(),
+  movementType: z.enum(["adjustment", "in", "out"]).optional(),
 });
 
 const productInputSchema = z.object({
@@ -273,7 +274,13 @@ export async function handleApiRequest(request: ApiRequestLike) {
 
       const productId = pathname.split("/").pop() ?? "";
       const payload = stockUpdateSchema.parse(parseJsonBody(request.body));
-      const updated = await setInventoryQuantity(productId, payload.quantity, payload.reason);
+      const updated = await setInventoryQuantity(
+        productId,
+        payload.quantity,
+        payload.reason,
+        undefined,
+        payload.movementType ?? "adjustment"
+      );
       return jsonResponse(200, { product: updated });
     }
 
