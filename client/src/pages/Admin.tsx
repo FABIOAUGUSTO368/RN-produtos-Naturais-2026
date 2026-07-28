@@ -372,32 +372,37 @@ export default function Admin() {
     setError("");
     try {
       const response = (await apiFetch("/api/admin/catalog")) as DashboardResponse;
+      const stockRows = Array.isArray(response.stock) ? response.stock : [];
+      const orderRows = Array.isArray(response.orders) ? response.orders : [];
+      const productRows = Array.isArray(response.products) ? response.products : [];
+      const supplierRows = Array.isArray(response.suppliers) ? response.suppliers : [];
+
       setDashboard(response);
       setStockDrafts(
         Object.fromEntries(
-          response.stock.map((item) => [
+          stockRows.map((item) => [
             item.id,
             { quantity: String(item.stockQuantity), movementType: "adjustment", reason: "" },
           ])
         )
       );
-      setStatusDrafts(Object.fromEntries(response.orders.map((order) => [order.id, order.status])));
+      setStatusDrafts(Object.fromEntries(orderRows.map((order) => [order.id, order.status])));
 
-      if (!selectedProductId && response.products.length > 0) {
-        setSelectedProductId(response.products[0].id);
-        setProductDraft(createProductDraft(response.products[0]));
+      if (!selectedProductId && productRows.length > 0) {
+        setSelectedProductId(productRows[0].id);
+        setProductDraft(createProductDraft(productRows[0]));
       } else if (selectedProductId) {
-        const current = response.products.find((item) => item.id === selectedProductId);
+        const current = productRows.find((item) => item.id === selectedProductId);
         if (current) {
           setProductDraft(createProductDraft(current));
         }
       }
 
-      if (!selectedSupplierId && response.suppliers.length > 0) {
-        setSelectedSupplierId(response.suppliers[0].id);
-        setSupplierDraft(createSupplierDraft(response.suppliers[0]));
+      if (!selectedSupplierId && supplierRows.length > 0) {
+        setSelectedSupplierId(supplierRows[0].id);
+        setSupplierDraft(createSupplierDraft(supplierRows[0]));
       } else if (selectedSupplierId) {
-        const currentSupplier = response.suppliers.find((item) => item.id === selectedSupplierId);
+        const currentSupplier = supplierRows.find((item) => item.id === selectedSupplierId);
         if (currentSupplier) {
           setSupplierDraft(createSupplierDraft(currentSupplier));
         }
