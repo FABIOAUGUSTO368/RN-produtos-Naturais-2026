@@ -170,6 +170,7 @@ const CATEGORY_OPTIONS = [
   { id: "farinhas", label: "Farinhas" },
   { id: "laticínios", label: "Laticínios" },
   { id: "pratos regionais", label: "Pratos regionais" },
+  { id: "produtos naturais", label: "Produtos naturais" },
 ];
 
 function formatCurrency(cents: number) {

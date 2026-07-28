@@ -10,6 +10,7 @@ const CATEGORIES = [
   { id: "farinhas", label: "Farinhas", icon: "🌽" },
   { id: "laticínios", label: "Laticínios", icon: "🧀" },
   { id: "pratos regionais", label: "Pratos regionais", icon: "🍛" },
+  { id: "produtos naturais", label: "Produtos naturais", icon: "🌿" },
 ];
 
 interface CategoryFiltersProps {

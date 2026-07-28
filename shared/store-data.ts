@@ -3,7 +3,8 @@ export type ProductCategory =
   | "cuscuz e massas"
   | "farinhas"
   | "laticínios"
-  | "pratos regionais";
+  | "pratos regionais"
+  | "produtos naturais";
 
 export type ProductBadgeVariant = "special" | "premium" | "certified";
 
@@ -116,6 +117,84 @@ export const PRODUCTS: StoreProduct[] = [
     badgeVariant: "special",
     initialStock: 15000,
   },
+  {
+    id: "7",
+    name: "Granola Artesanal do Sertão",
+    categoryId: "produtos naturais",
+    category: "Produtos naturais",
+    price: 24.9,
+    unit: "/500g",
+    image: "/menu-images/natural-granola.jpg",
+    description: "Mistura crocante de cereais para café da manhã, lanches e receitas leves.",
+    badge: "Saudável",
+    badgeVariant: "certified",
+    initialStock: 18000,
+  },
+  {
+    id: "8",
+    name: "Mix de Castanhas Premium",
+    categoryId: "produtos naturais",
+    category: "Produtos naturais",
+    price: 29.9,
+    unit: "/500g",
+    image: "/menu-images/natural-mix.jpg",
+    description: "Seleção fictícia com castanhas, amendoim e frutas secas para consumo diário.",
+    badge: "Energia",
+    badgeVariant: "premium",
+    initialStock: 12000,
+  },
+  {
+    id: "9",
+    name: "Chá de Ervas da Serra",
+    categoryId: "produtos naturais",
+    category: "Produtos naturais",
+    price: 16.8,
+    unit: "/200g",
+    image: "/menu-images/natural-cha.jpg",
+    description: "Infusão suave com ervas e folhas secas para momentos de relaxamento e bem-estar.",
+    badge: "Bem-estar",
+    badgeVariant: "certified",
+    initialStock: 14000,
+  },
+  {
+    id: "10",
+    name: "Caju Cristalizado da Casa",
+    categoryId: "produtos naturais",
+    category: "Produtos naturais",
+    price: 18.4,
+    unit: "/300g",
+    image: "/menu-images/natural-caju.jpg",
+    description: "Doce regional fictício com sabor marcante de caju e acabamento artesanal.",
+    badge: "Regional",
+    badgeVariant: "special",
+    initialStock: 10000,
+  },
+  {
+    id: "11",
+    name: "Tempero Caseiro Nordestino",
+    categoryId: "produtos naturais",
+    category: "Produtos naturais",
+    price: 12.9,
+    unit: "/250g",
+    image: "/menu-images/temperos.jpg",
+    description: "Base de temperos secos para carnes, farofas, feijão e preparos do dia a dia.",
+    badge: "Prático",
+    badgeVariant: "certified",
+    initialStock: 22000,
+  },
+  {
+    id: "12",
+    name: "Cereais Integrais da Casa",
+    categoryId: "produtos naturais",
+    category: "Produtos naturais",
+    price: 22.5,
+    unit: "/500g",
+    image: "/menu-images/cereais.jpg",
+    description: "Blend fictício de cereais integrais para servir no café ou em receitas saudáveis.",
+    badge: "Integral",
+    badgeVariant: "premium",
+    initialStock: 16000,
+  },
 ];
 
 export const CATEGORY_TITLES: Record<string, string> = {
@@ -125,6 +204,7 @@ export const CATEGORY_TITLES: Record<string, string> = {
   farinhas: "Farinhas",
   "laticínios": "Laticínios",
   "pratos regionais": "Pratos regionais",
+  "produtos naturais": "Produtos naturais",
 };
 
 export function findProductById(productId: string) {
