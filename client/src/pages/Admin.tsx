@@ -300,6 +300,7 @@ export default function Admin() {
   const [productDraft, setProductDraft] = useState<ProductDraft>(createEmptyProductDraft());
   const [selectedSupplierId, setSelectedSupplierId] = useState<string | null>(null);
   const [supplierDraft, setSupplierDraft] = useState<SupplierDraft>(createEmptySupplierDraft());
+  const [activeTab, setActiveTab] = useState("catalog");
 
   const overview = dashboard?.overview;
   const products = dashboard?.products ?? [];
@@ -665,28 +666,31 @@ export default function Admin() {
               </CardHeader>
               <CardContent className="space-y-2">
                 {[
-                  { label: "Painel Financeiro / Dashboard", icon: Gauge, active: true },
-                  { label: "Estoque & Cadastros", icon: Boxes },
-                  { label: "Controle de Pedidos", icon: ClipboardList },
-                  { label: "Promoções", icon: Megaphone },
-                  { label: "WhatsApp Bot & Auditoria", icon: ShoppingCart },
+                  { label: "Painel Financeiro / Dashboard", icon: Gauge, value: "catalog" },
+                  { label: "Estoque & Cadastros", icon: Boxes, value: "stock" },
+                  { label: "Controle de Pedidos", icon: ClipboardList, value: "orders" },
+                  { label: "Promoções", icon: Megaphone, value: "promotions" },
+                  { label: "WhatsApp Bot & Auditoria", icon: ShoppingCart, value: "movements" },
                 ].map((item) => {
                   const Icon = item.icon;
+                  const isActive = activeTab === item.value;
                   return (
-                    <div
+                    <button
+                      type="button"
                       key={item.label}
+                      onClick={() => setActiveTab(item.value)}
                       className={`flex items-center justify-between rounded-2xl border px-4 py-3 text-sm transition ${
-                        item.active
+                        isActive
                           ? "border-emerald-400/35 bg-emerald-400/12 text-emerald-50"
                           : "border-white/10 bg-white/5 text-slate-300 hover:border-white/20 hover:bg-white/10"
                       }`}
                     >
                       <div className="flex items-center gap-3">
-                        <Icon className={item.active ? "h-4 w-4 text-emerald-300" : "h-4 w-4 text-slate-400"} />
+                        <Icon className={isActive ? "h-4 w-4 text-emerald-300" : "h-4 w-4 text-slate-400"} />
                         <span className="font-medium">{item.label}</span>
                       </div>
                       <ChevronRight className="h-4 w-4 text-slate-500" />
-                    </div>
+                    </button>
                   );
                 })}
               </CardContent>
@@ -921,7 +925,7 @@ export default function Admin() {
           </div>
         ) : null}
 
-        <Tabs defaultValue="catalog" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid h-auto w-full grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-white/5 p-2 md:grid-cols-6">
             <TabsTrigger value="catalog">Catálogo</TabsTrigger>
             <TabsTrigger value="stock">Estoque</TabsTrigger>
