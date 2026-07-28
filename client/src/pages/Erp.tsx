@@ -220,6 +220,41 @@ function movementClass(type: MovementType) {
   return classes[type];
 }
 
+type StockHealth = "healthy" | "attention" | "critical";
+
+function stockThreshold(item: AdminProduct) {
+  return item.minThreshold ?? 10;
+}
+
+function stockHealth(item: AdminProduct): StockHealth {
+  const threshold = stockThreshold(item);
+  if (item.stockQuantity <= threshold) {
+    return "critical";
+  }
+  if (item.stockQuantity <= threshold * 1.5) {
+    return "attention";
+  }
+  return "healthy";
+}
+
+function stockHealthLabel(health: StockHealth) {
+  const labels: Record<StockHealth, string> = {
+    healthy: "Saudável",
+    attention: "Atenção",
+    critical: "Crítico",
+  };
+  return labels[health];
+}
+
+function stockHealthClass(health: StockHealth) {
+  const classes: Record<StockHealth, string> = {
+    healthy: "border-emerald-400/20 bg-emerald-500/10 text-emerald-200",
+    attention: "border-amber-400/20 bg-amber-500/10 text-amber-200",
+    critical: "border-rose-400/20 bg-rose-500/10 text-rose-200",
+  };
+  return classes[health];
+}
+
 function shortMonthLabel(date: Date) {
   return new Intl.DateTimeFormat("pt-BR", { month: "short" }).format(date).replace(".", "");
 }
@@ -337,9 +372,27 @@ export default function Erp() {
     () => [...stock].sort((a, b) => a.stockQuantity - b.stockQuantity).slice(0, 4),
     [stock]
   );
+  const stockHealthSummary = useMemo(() => {
+    return stock.reduce(
+      (acc, item) => {
+        const health = stockHealth(item);
+        acc[health] += 1;
+        return acc;
+      },
+      { healthy: 0, attention: 0, critical: 0 } as Record<StockHealth, number>
+    );
+  }, [stock]);
+
+  const stockMonitorItems = useMemo(
+    () => [...stock].sort((a, b) => a.stockQuantity - b.stockQuantity).slice(0, 6),
+    [stock]
+  );
 
   const activeProducts = products.filter((item) => item.active);
   const activePromotions = products.filter((item) => item.promoActive && item.promoPriceCents != null);
+  const activeSuppliers = suppliers.filter((item) => item.active);
+  const pendingOrders = orders.filter((order) => order.status === "pending_payment" || order.status === "preparing");
+  const fulfilledOrders = orders.filter((order) => order.status === "paid" || order.status === "shipped" || order.status === "delivered");
   const todayRevenue = useMemo(() => {
     const today = new Date();
     return orders.reduce((sum, order) => {
@@ -357,6 +410,9 @@ export default function Erp() {
   }, [orders]);
   const averageTicket = overview?.paidOrders ? Math.round(overview.revenueCents / overview.paidOrders) : 0;
   const estimatedProfitCents = Math.round(overview?.revenueCents ?? 0) - Math.round((overview?.revenueCents ?? 0) * 0.58);
+  const criticalStockCount = stockHealthSummary.critical;
+  const attentionStockCount = stockHealthSummary.attention;
+  const healthyStockCount = stockHealthSummary.healthy;
 
   const headers = useMemo(
     () => ({
@@ -783,7 +839,7 @@ export default function Erp() {
 
         <main className="space-y-6">
           <Card className="border-white/10 bg-[#111b26] text-slate-100 shadow-2xl shadow-black/20">
-            <CardContent className="flex flex-col gap-4 p-6 lg:flex-row lg:items-center lg:justify-between">
+            <CardContent className="flex flex-col gap-4 p-6">
               <div className="space-y-2">
                 <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-emerald-200">
                   <Sparkles className="h-3.5 w-3.5" />
@@ -809,6 +865,28 @@ export default function Erp() {
                   <Download className="mr-2 h-4 w-4" />
                   Exportar visao
                 </Button>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.25em] text-emerald-300">Estoque saudável</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{healthyStockCount}</p>
+                  <p className="text-xs text-emerald-200/90">Itens com cobertura acima do mínimo.</p>
+                </div>
+                <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.25em] text-amber-200">Estoque em atenção</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{attentionStockCount}</p>
+                  <p className="text-xs text-amber-100/90">Revisar giro e necessidade de reposição.</p>
+                </div>
+                <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.25em] text-rose-200">Estoque crítico</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{criticalStockCount}</p>
+                  <p className="text-xs text-rose-100/90">Reposição prioritária para não faltar na loja.</p>
+                </div>
+                <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-[11px] uppercase tracking-[0.25em] text-slate-400">Pedidos em andamento</p>
+                  <p className="mt-1 text-lg font-semibold text-white">{pendingOrders.length}</p>
+                  <p className="text-xs text-slate-300">{fulfilledOrders.length} pedidos já fluindo na operação.</p>
+                </div>
               </div>
             </CardContent>
           </Card>

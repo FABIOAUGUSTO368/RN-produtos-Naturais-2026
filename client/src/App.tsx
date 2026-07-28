@@ -2,10 +2,10 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import CheckoutResult from "@/pages/CheckoutResult";
 import NotFound from "@/pages/NotFound";
+import Erp from "@/pages/Erp";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Admin from "./pages/Admin";
 import Home from "./pages/Home";
 import "./styles/animations.css";
 
@@ -14,7 +14,8 @@ function Router() {
   return (
     <Switch>
       <Route path={"/"} component={Home} />
-      <Route path={"/admin"} component={Admin} />
+      <Route path={"/admin"} component={Erp} />
+      <Route path={"/erp"} component={Erp} />
       <Route path={"/checkout/result"} component={CheckoutResult} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
