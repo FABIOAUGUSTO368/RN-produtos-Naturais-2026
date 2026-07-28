@@ -194,6 +194,11 @@ async function postMercadoPagoPixOrder(order: OrderRecord) {
 
 export async function createMercadoPagoPreference(order: OrderRecord, baseUrl: string) {
   const backUrls = getPreferenceReturnUrls(baseUrl, order.id);
+  const orderItems = Array.isArray(order.items) ? order.items : [];
+
+  if (orderItems.length === 0) {
+    throw new Error("Pedido sem itens para gerar o checkout.");
+  }
 
   const response = await fetchWithRetry("https://api.mercadopago.com/checkout/preferences", {
     method: "POST",
@@ -203,7 +208,7 @@ export async function createMercadoPagoPreference(order: OrderRecord, baseUrl: s
       "X-Idempotency-Key": randomUUID(),
     },
     body: JSON.stringify({
-      items: order.items.map((item) => ({
+      items: orderItems.map((item) => ({
         id: item.productId,
         title: item.name,
         quantity: item.quantity,
